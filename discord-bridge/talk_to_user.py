@@ -52,7 +52,7 @@ def talk_to_user_main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Send a talk-to-user message to the remote bridge and optionally wait for the reply. "
-            "This script is intended to live at the top-level directory so prompted agents and subagents "
+            "This script is intended to live under .myteam/discord-bridge so prompted agents and subagents "
             "can call it directly."
         ),
         parents=[bridge_routing.common_parser()],

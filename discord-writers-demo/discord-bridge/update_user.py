@@ -34,7 +34,7 @@ def update_user_main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Send state or subagent-log updates to the remote bridge. "
-            "This script is intended to live at the top-level directory so prompted agents and subagents "
+            "This script is intended to live under .myteam/discord-bridge so prompted agents and subagents "
             "can call it directly."
         ),
         parents=[bridge_routing.common_parser()],
