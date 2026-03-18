@@ -1,1 +1,0 @@
-Instructions on creating myteam skills.
