@@ -82,7 +82,7 @@ class BridgeService:
         )
         return self.store.enqueue_reply(channel_id, reply)
 
-    def wait_for_reply(self, routing: Routing, timeout_seconds: float) -> dict[str, object]:
+    def wait_for_reply(self, routing: Routing, timeout_seconds: float | None) -> dict[str, object]:
         reply = self.store.wait_for_reply(routing, timeout_seconds)
         if reply is None:
             return {"ok": True, "reply": None}

@@ -6,6 +6,7 @@ import os
 from typing import Any
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
+import bridge_server_control
 import bridge_routing
 
 
@@ -16,7 +17,9 @@ def _request(
     payload: dict[str, object] | None = None,
 ) -> dict[str, object]:
     data = None
-    headers = {"Authorization": f"Bearer {api_token}"}
+    headers: dict[str, str] = {}
+    if api_token:
+        headers["Authorization"] = f"Bearer {api_token}"
     if payload is not None:
         data = json.dumps(payload).encode("utf-8")
         headers["Content-Type"] = "application/json"
@@ -72,6 +75,8 @@ def update_user_main(argv: list[str] | None = None) -> int:
         default="",
         help=argparse.SUPPRESS,
     )
+    log_parser.add_argument("--parent-agent-id", default="", help=argparse.SUPPRESS)
+    log_parser.add_argument("--parent-agent-name", default="", help=argparse.SUPPRESS)
     log_parser.add_argument("--top-level-agent-name", required=True)
     log_parser.add_argument("--to-subagent", required=True)
     log_parser.add_argument("--subagent-name", required=True)
@@ -80,6 +85,7 @@ def update_user_main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if not (args.discord_guild_id or os.getenv("DISCORD_GUILD_ID", "")):
         raise SystemExit("missing Discord guild routing: pass --discord-guild-id or set DISCORD_GUILD_ID")
+    bridge_server_control.ensure_local_bridge(args.api_base_url)
     routing = bridge_routing.subagent_log_routing_from_args(args)
 
     if args.command == "state":

@@ -30,7 +30,7 @@ def _stable_agent_suffix(agent_id: str) -> str:
 def slugify_channel_name(agent_kind: str, agent_name: str, agent_id: str = "") -> str:
     prefix = "subagent" if agent_kind == "subagent" else "agent"
     name_part = _slugify_name_part(agent_name)
-    if agent_kind != "subagent":
+    if not agent_id:
         return f"{prefix}-{name_part}"[:100]
 
     visible_suffix = _stable_agent_suffix(agent_id or agent_name)
@@ -57,7 +57,6 @@ class DiscordGateway(Protocol):
         self,
         guild_id: str,
         channel_ids: list[str],
-        category_id: str,
     ) -> list[str]: ...
     def clear_all_non_general_channels(
         self,
@@ -67,8 +66,7 @@ class DiscordGateway(Protocol):
 
 
 class MemoryDiscordGateway:
-    def __init__(self, category_id: str = "") -> None:
-        self.category_id = category_id
+    def __init__(self) -> None:
         self.channels: dict[str, dict[str, str]] = {}
         self.messages: dict[str, list[str]] = {}
         self.typing_refreshes: list[tuple[str, int]] = []
@@ -89,7 +87,6 @@ class MemoryDiscordGateway:
         for channel_id, channel in self.channels.items():
             if (
                 channel.get("guild_id") == routing.discord_guild_id
-                and channel.get("category_id") == self.category_id
                 and channel.get("topic") == expected_topic
             ):
                 return channel_id
@@ -103,7 +100,6 @@ class MemoryDiscordGateway:
             ),
             "topic": render_channel_topic(routing),
             "guild_id": routing.discord_guild_id,
-            "category_id": self.category_id,
         }
         self.messages[channel_id] = []
         return channel_id
@@ -122,7 +118,6 @@ class MemoryDiscordGateway:
         self,
         guild_id: str,
         channel_ids: list[str],
-        category_id: str,
     ) -> list[str]:
         deleted: list[str] = []
         for channel_id in channel_ids:
@@ -130,7 +125,6 @@ class MemoryDiscordGateway:
             if (
                 channel is None
                 or channel.get("guild_id") != guild_id
-                or channel.get("category_id") != category_id
             ):
                 continue
             deleted.append(channel_id)
@@ -156,12 +150,16 @@ class MemoryDiscordGateway:
 
 
 class DiscordBotGateway:
+    _EXIT_ACK_TIMEOUT_SECONDS = 1.5
+    _SHUTDOWN_TIMEOUT_SECONDS = 2.0
+
     def __init__(
         self,
         config: BridgeConfig,
         on_user_reply: Callable[[str, str, str, str], None],
         on_clear_logs: Callable[[str], list[str]],
         on_clear_all: Callable[[str], tuple[list[str], list[str]]],
+        on_exit: Callable[[], None],
     ) -> None:
         if discord is None:
             raise RuntimeError(
@@ -171,6 +169,7 @@ class DiscordBotGateway:
         self._on_user_reply = on_user_reply
         self._on_clear_logs = on_clear_logs
         self._on_clear_all = on_clear_all
+        self._on_exit = on_exit
         self._loop: asyncio.AbstractEventLoop | None = None
         self._thread: threading.Thread | None = None
         self._ready = threading.Event()
@@ -205,6 +204,14 @@ class DiscordBotGateway:
         with contextlib.suppress(Exception):
             await report_channel.send(self._render_clear_all_result(deleted, failed))
 
+    async def _run_exit_from_message(self, message: discord.Message) -> None:
+        with contextlib.suppress(Exception):
+            await asyncio.wait_for(
+                message.channel.send("Shutting down bridge server..."),
+                timeout=self._EXIT_ACK_TIMEOUT_SECONDS,
+            )
+        await asyncio.to_thread(self._on_exit)
+
     def _install_handlers(self) -> None:
         @self._client.event
         async def on_ready() -> None:
@@ -228,6 +235,9 @@ class DiscordBotGateway:
             if message.content.strip() == ".clear_all":
                 asyncio.create_task(self._run_clear_all_from_message(message))
                 return
+            if message.content.strip() == ".exit":
+                asyncio.create_task(self._run_exit_from_message(message))
+                return
             self._on_user_reply(
                 str(message.channel.id),
                 message.content,
@@ -248,7 +258,14 @@ class DiscordBotGateway:
         loop = asyncio.new_event_loop()
         self._loop = loop
         asyncio.set_event_loop(loop)
-        loop.run_until_complete(self._client.start(self._config.bot_key))
+        try:
+            loop.run_until_complete(self._client.start(self._config.bot_key))
+        finally:
+            self._loop = None
+            self._ready.clear()
+            with contextlib.suppress(Exception):
+                loop.run_until_complete(loop.shutdown_asyncgens())
+            loop.close()
 
     def _submit(self, coro: asyncio.Future) -> Future:
         if self._loop is None:
@@ -256,12 +273,16 @@ class DiscordBotGateway:
         return asyncio.run_coroutine_threadsafe(coro, self._loop)
 
     def stop(self) -> None:
-        if self._loop is None:
+        loop = self._loop
+        if loop is None:
             return
-        future = self._submit(self._client.close())
-        future.result(timeout=10)
+        with contextlib.suppress(Exception):
+            future = asyncio.run_coroutine_threadsafe(self._client.close(), loop)
+            future.result(timeout=self._SHUTDOWN_TIMEOUT_SECONDS)
         if self._thread is not None:
-            self._thread.join(timeout=10)
+            self._thread.join(timeout=self._SHUTDOWN_TIMEOUT_SECONDS)
+            if not self._thread.is_alive():
+                self._thread = None
 
     async def _ensure_channel_async(self, routing: Routing, existing_channel_id: str | None) -> str:
         guild = self._client.get_guild(int(routing.discord_guild_id))
@@ -271,29 +292,18 @@ class DiscordBotGateway:
         if existing_channel_id:
             channel = guild.get_channel(int(existing_channel_id))
         if channel is None:
-            category = None
-            if self._config.category_id:
-                category = guild.get_channel(int(self._config.category_id))
             expected_topic = render_channel_topic(routing)
             for candidate in guild.text_channels:
-                if category is not None and getattr(candidate.category, "id", None) != category.id:
-                    continue
-                if category is None and getattr(candidate, "category", None) is not None:
-                    continue
                 if getattr(candidate, "topic", None) == expected_topic:
                     channel = candidate
                     break
         if channel is None:
-            category = None
-            if self._config.category_id:
-                category = guild.get_channel(int(self._config.category_id))
             channel = await guild.create_text_channel(
                 slugify_channel_name(
                     routing.agent_kind,
                     routing.agent_name,
                     routing.agent_id,
                 ),
-                category=category,
                 topic=render_channel_topic(routing),
             )
         return str(channel.id)
@@ -354,7 +364,6 @@ class DiscordBotGateway:
         self,
         guild_id: str,
         channel_ids: list[str],
-        category_id: str,
     ) -> list[str]:
         if not self._config.bot_key:
             return []
@@ -363,8 +372,6 @@ class DiscordBotGateway:
             channel = self._client.get_channel(int(channel_id))
             if channel is not None:
                 if getattr(channel, "guild", None) is None or str(channel.guild.id) != guild_id:
-                    continue
-                if str(getattr(channel, "category_id", "") or "") != category_id:
                     continue
             future = self._submit(self._delete_channel_async(channel_id))
             if future.result(timeout=30):

@@ -29,10 +29,9 @@ def env_flag(name: str, default: bool) -> bool:
 class BridgeConfig:
     host: str = "127.0.0.1"
     port: int = 8080
-    api_token: str = "change-me"
+    api_token: str = ""
     bot_key: str = ""
     default_guild_id: str = ""
-    category_id: str = ""
     general_channel_name: str = "general"
     clear_all_parallelism: int = 4
     reply_timeout_seconds: int = 300
@@ -53,10 +52,9 @@ def load_config(env_file: str | None = None) -> BridgeConfig:
     return BridgeConfig(
         host=os.getenv("BRIDGE_HOST", "127.0.0.1"),
         port=int(os.getenv("BRIDGE_PORT", "8080")),
-        api_token=os.getenv("BRIDGE_API_TOKEN", "change-me"),
+        api_token=os.getenv("BRIDGE_API_TOKEN", ""),
         bot_key=os.getenv("BOT_KEY", ""),
         default_guild_id=os.getenv("DISCORD_GUILD_ID", ""),
-        category_id=os.getenv("DISCORD_CATEGORY_ID", ""),
         general_channel_name=os.getenv("DISCORD_GENERAL_CHANNEL_NAME", "general"),
         clear_all_parallelism=max(1, int(os.getenv("BRIDGE_CLEAR_ALL_PARALLELISM", "4"))),
         reply_timeout_seconds=int(os.getenv("BRIDGE_REPLY_TIMEOUT_SECONDS", "300")),

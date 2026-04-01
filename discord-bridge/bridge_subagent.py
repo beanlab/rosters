@@ -9,8 +9,8 @@ import update_user
 
 def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
-    if not args or args[0] not in {"talk", "update"}:
-        raise SystemExit("usage: .myteam/discord-bridge/bridge_subagent.py {talk|update} ...")
+    if not args or args[0] not in {"talk", "send", "update"}:
+        raise SystemExit("usage: .myteam/discord-bridge/bridge_subagent.py {talk|send|update} ...")
 
     agent_name, agent_id = bridge_routing.resolve_subagent_identity()
     routed_args = [
@@ -22,6 +22,8 @@ def main(argv: list[str] | None = None) -> int:
         agent_name,
     ]
     command, rest = args[0], args[1:]
+    if command == "send":
+        return talk_to_user.talk_to_user_main(routed_args + rest + ["--no-wait"])
     if command == "talk":
         return talk_to_user.talk_to_user_main(routed_args + rest)
     return update_user.update_user_main(routed_args + rest)

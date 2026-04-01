@@ -7,6 +7,7 @@ import sys
 from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
+import bridge_server_control
 import bridge_routing
 
 
@@ -15,15 +16,18 @@ def _request(
     url: str,
     api_token: str,
     payload: dict[str, object] | None = None,
+    timeout_seconds: float | None = 310,
 ) -> dict[str, object]:
     data = None
-    headers = {"Authorization": f"Bearer {api_token}"}
+    headers: dict[str, str] = {}
+    if api_token:
+        headers["Authorization"] = f"Bearer {api_token}"
     if payload is not None:
         data = json.dumps(payload).encode("utf-8")
         headers["Content-Type"] = "application/json"
     request = Request(url=url, method=method, data=data, headers=headers)
     try:
-        with urlopen(request, timeout=310) as response:
+        with urlopen(request, timeout=timeout_seconds) as response:
             return json.loads(response.read().decode("utf-8"))
     except HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace")
@@ -34,13 +38,21 @@ def _wait_for_reply(
     api_base_url: str,
     api_token: str,
     routing: dict[str, str],
-    timeout_seconds: int,
+    timeout_seconds: int | None,
 ) -> int:
-    query = urlencode({**routing, "timeout_seconds": timeout_seconds})
-    reply = _request("GET", f"{api_base_url.rstrip('/')}/v1/replies/next?{query}", api_token)
+    query_payload = dict(routing)
+    if timeout_seconds is not None:
+        query_payload["timeout_seconds"] = str(timeout_seconds)
+    query = urlencode(query_payload)
+    reply = _request(
+        "GET",
+        f"{api_base_url.rstrip('/')}/v1/replies/next?{query}",
+        api_token,
+        timeout_seconds=None,
+    )
     reply_payload = reply.get("reply")
     if not reply_payload:
-        raise SystemExit("no reply received before timeout")
+        raise SystemExit("no reply received")
     sys.stdout.write(str(reply_payload["content"]))
     if not str(reply_payload["content"]).endswith("\n"):
         sys.stdout.write("\n")
@@ -65,11 +77,12 @@ def talk_to_user_main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Do not send a message; just mark the agent as awaiting the user and wait for the next Discord reply.",
     )
-    parser.add_argument("--timeout-seconds", type=int, default=int(os.getenv("BRIDGE_REPLY_TIMEOUT_SECONDS", "300")))
+    parser.add_argument("--timeout-seconds", type=int, default=None, help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     if not (args.discord_guild_id or os.getenv("DISCORD_GUILD_ID", "")):
         raise SystemExit("missing Discord guild routing: pass --discord-guild-id or set DISCORD_GUILD_ID")
 
+    bridge_server_control.ensure_local_bridge(args.api_base_url)
     routing = bridge_routing.routing_from_args(args)
     if args.wait_only:
         if args.no_wait:

@@ -1,2 +1,0 @@
-"""Discord agent bridge package."""
-

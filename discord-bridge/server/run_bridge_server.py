@@ -26,10 +26,17 @@ class BridgeRuntime:
     def __init__(self, config: BridgeConfig) -> None:
         self.config = config
         self.store = InMemoryBridgeStore()
+        self._shutdown_callback: callable[[], None] | None = None
         if config.enable_bot and config.bot_key:
-            gateway = DiscordBotGateway(config, self._receive_reply, self.clear_all_logs, self.clear_all_non_general)
+            gateway = DiscordBotGateway(
+                config,
+                self._receive_reply,
+                self.clear_all_logs,
+                self.clear_all_non_general,
+                self.request_shutdown,
+            )
         else:
-            gateway = MemoryDiscordGateway(config.category_id)
+            gateway = MemoryDiscordGateway()
         self.gateway = gateway
         self.service = BridgeService(self.store, self.gateway)
 
@@ -53,13 +60,18 @@ class BridgeRuntime:
     def stop(self) -> None:
         self.gateway.stop()
 
+    def bind_shutdown_callback(self, callback: callable[[], None]) -> None:
+        self._shutdown_callback = callback
+
+    def request_shutdown(self) -> None:
+        if self._shutdown_callback is not None:
+            self._shutdown_callback()
+
     def clear_all_logs(self, guild_id: str) -> list[str]:
-        if not self.config.category_id:
-            return []
         channel_ids = self.store.channel_ids_for_guild(guild_id)
         if not channel_ids:
             return []
-        deleted = self.gateway.clear_managed_channels(guild_id, channel_ids, self.config.category_id)
+        deleted = self.gateway.clear_managed_channels(guild_id, channel_ids)
         self.store.forget_channels(deleted)
         return deleted
 
@@ -145,12 +157,8 @@ class BridgeRequestHandler(BaseHTTPRequestHandler):
                 "timestamp": params.get("timestamp", [""])[0],
             }
         )
-        timeout_seconds = float(
-            params.get(
-                "timeout_seconds",
-                [str(self.server.runtime.config.reply_timeout_seconds)],
-            )[0]
-        )
+        raw_timeout = params.get("timeout_seconds", [""])[0].strip()
+        timeout_seconds = float(raw_timeout) if raw_timeout else None
         result = self.server.runtime.service.wait_for_reply(routing, timeout_seconds)
         self._send_json(HTTPStatus.OK, result)
 
@@ -166,6 +174,7 @@ class BridgeRequestHandler(BaseHTTPRequestHandler):
 def build_server(config: BridgeConfig) -> tuple[BridgeRuntime, BridgeHTTPServer]:
     runtime = BridgeRuntime(config)
     server = BridgeHTTPServer((config.host, config.port), runtime)
+    runtime.bind_shutdown_callback(server.shutdown)
     return runtime, server
 
 

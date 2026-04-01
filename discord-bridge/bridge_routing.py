@@ -37,7 +37,7 @@ def utc_now_iso() -> str:
 def common_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--api-base-url", default=os.getenv("BRIDGE_API_BASE_URL", "http://127.0.0.1:8080"))
-    parser.add_argument("--api-token", default=os.getenv("BRIDGE_API_TOKEN", "change-me"))
+    parser.add_argument("--api-token", default=os.getenv("BRIDGE_API_TOKEN", ""))
     parser.add_argument("--workspace-id")
     parser.add_argument("--session-id")
     parser.add_argument("--agent-id")
@@ -54,13 +54,7 @@ def routing_from_args(args: argparse.Namespace) -> dict[str, str]:
         workspace_id = _subagent_workspace_id(args)
         session_id = _subagent_session_id(args)
     else:
-        agent_name = args.agent_name or os.getenv("BRIDGE_AGENT_NAME", "")
-        if not agent_name:
-            agent_name = "Main"
-
-        agent_id = args.agent_id or os.getenv("BRIDGE_AGENT_ID", "")
-        if not agent_id:
-            agent_id = _slug(agent_name)
+        agent_name, agent_id = resolve_top_level_identity(args.agent_id, args.agent_name)
         workspace_id = args.workspace_id or _default_workspace_id()
         session_id = args.session_id or _default_session_id()
 
@@ -82,16 +76,23 @@ def subagent_log_routing_from_args(args: argparse.Namespace) -> dict[str, str]:
     if agent_kind == "subagent":
         workspace_id = _subagent_workspace_id(args)
         session_id = _subagent_session_id(args)
+        agent_name, agent_id = resolve_parent_top_level_identity(
+            getattr(args, "parent_agent_id", ""),
+            getattr(args, "parent_agent_name", ""),
+        )
     else:
         workspace_id = args.workspace_id or _default_workspace_id()
         session_id = args.session_id or _default_session_id()
-    # Coordination logs always land in the shared main-agent channel for the
-    # caller's active workspace/session/guild. Legacy --log-* flags are ignored.
+        agent_name, agent_id = resolve_top_level_identity(args.agent_id, args.agent_name)
+    # Coordination logs land in the caller's top-level coordination channel.
+    # For subagents, prefer the explicit parent top-level identity and fall
+    # back to a neutral top-level placeholder only if no parent identity is
+    # available. Legacy --log-* flags are ignored.
     return {
         "workspace_id": workspace_id,
         "session_id": session_id,
-        "agent_id": "main",
-        "agent_name": "Main",
+        "agent_id": agent_id,
+        "agent_name": agent_name,
         "agent_kind": "top_level",
         "discord_guild_id": args.discord_guild_id or os.getenv("DISCORD_GUILD_ID", ""),
         "timestamp": utc_now_iso(),
@@ -147,6 +148,38 @@ def _thread_id_env() -> str:
     return os.getenv("CODEX_THREAD_ID", "").strip()
 
 
+def _top_level_name_env() -> str:
+    for key in ("BRIDGE_AGENT_NAME", "CODEX_AGENT_NAME", "MYTEAM_AGENT_NAME"):
+        value = os.getenv(key, "").strip()
+        if value:
+            return value
+    return ""
+
+
+def _top_level_id_env() -> str:
+    for key in ("BRIDGE_AGENT_ID", "CODEX_AGENT_ID", "MYTEAM_AGENT_ID", "CODEX_THREAD_ID"):
+        value = os.getenv(key, "").strip()
+        if value:
+            return value
+    return ""
+
+
+def _parent_top_level_name_env() -> str:
+    for key in ("BRIDGE_PARENT_AGENT_NAME", "BRIDGE_TOP_LEVEL_AGENT_NAME"):
+        value = os.getenv(key, "").strip()
+        if value:
+            return value
+    return ""
+
+
+def _parent_top_level_id_env() -> str:
+    for key in ("BRIDGE_PARENT_AGENT_ID", "BRIDGE_TOP_LEVEL_AGENT_ID"):
+        value = os.getenv(key, "").strip()
+        if value:
+            return value
+    return ""
+
+
 def _has_explicit_subagent_identity() -> bool:
     # Only treat the caller as a subagent by default when the runtime provides
     # spawn-specific identity. A bare thread ID is too broad and can leak into
@@ -183,6 +216,28 @@ def resolve_subagent_identity(agent_id: str = "", agent_name: str = "") -> tuple
     if not resolved_name:
         resolved_name = resolved_id
     return resolved_name, resolved_id
+
+
+def resolve_top_level_identity(agent_id: str = "", agent_name: str = "") -> tuple[str, str]:
+    resolved_name = (agent_name or _top_level_name_env()).strip()
+    resolved_id = (agent_id or _top_level_id_env()).strip()
+    if not resolved_id:
+        resolved_id = _slug(resolved_name or "top-level")
+    if not resolved_name:
+        resolved_name = resolved_id
+    return resolved_name, resolved_id
+
+
+def resolve_parent_top_level_identity(agent_id: str = "", agent_name: str = "") -> tuple[str, str]:
+    resolved_name = (agent_name or _parent_top_level_name_env()).strip()
+    resolved_id = (agent_id or _parent_top_level_id_env()).strip()
+    if resolved_id:
+        if not resolved_name:
+            resolved_name = resolved_id
+        return resolved_name, resolved_id
+    if resolved_name:
+        return resolved_name, _slug(resolved_name)
+    return "top-level", "top-level"
 
 
 def _subagent_identity_from_args(args: argparse.Namespace) -> tuple[str, str]:
