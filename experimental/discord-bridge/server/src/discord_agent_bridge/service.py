@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import threading
 import uuid
+from typing import Callable
 
 from .discord_gateway import DiscordGateway
 from .models import (
@@ -17,10 +18,29 @@ from .store import InMemoryBridgeStore
 
 
 class BridgeService:
-    def __init__(self, store: InMemoryBridgeStore, gateway: DiscordGateway) -> None:
+    def __init__(
+        self,
+        store: InMemoryBridgeStore,
+        gateway: DiscordGateway,
+        on_wait_started: Callable[[], None] | None = None,
+        on_wait_finished: Callable[[], None] | None = None,
+    ) -> None:
         self.store = store
         self.gateway = gateway
         self._channel_lock = threading.RLock()
+        self._on_wait_started = on_wait_started
+        self._on_wait_finished = on_wait_finished
+
+    def _begin_waiting(self, routing: Routing) -> None:
+        if self._on_wait_started is not None:
+            self._on_wait_started()
+        self.store.begin_waiting_for_reply(routing)
+
+    def _maybe_stop_waiting(self) -> None:
+        if self._on_wait_finished is None:
+            return
+        if not self.store.has_awaiting_sessions():
+            self._on_wait_finished()
 
     def _ensure_channel(self, routing: Routing) -> str:
         with self._channel_lock:
@@ -31,11 +51,18 @@ class BridgeService:
 
     def post_message(self, request: MessageRequest) -> DeliveryRecord:
         channel_id = self._ensure_channel(request.routing)
-        delivery_id = self.gateway.send_message(channel_id, request.content)
-        state = "awaiting_user" if request.expects_reply else "delivered"
         if request.expects_reply:
-            self.store.begin_waiting_for_reply(request.routing)
-        else:
+            self._begin_waiting(request.routing)
+        try:
+            delivery_id = self.gateway.send_message(channel_id, request.content)
+        except Exception:
+            if request.expects_reply:
+                self.store.cancel_waiting_for_reply(request.routing)
+                self._maybe_stop_waiting()
+            raise
+
+        state = "awaiting_user" if request.expects_reply else "delivered"
+        if not request.expects_reply:
             self.store.set_conversation_state(request.routing, state)
         self.gateway.stop_typing(channel_id)
         return DeliveryRecord(
@@ -46,7 +73,11 @@ class BridgeService:
 
     def update_state(self, request: StateUpdateRequest) -> dict[str, object]:
         channel_id = self._ensure_channel(request.routing)
-        self.store.set_conversation_state(request.routing, request.state)
+        if request.state == "awaiting_user":
+            self._begin_waiting(request.routing)
+        else:
+            self.store.cancel_waiting_for_reply(request.routing, state=request.state)
+            self._maybe_stop_waiting()
         if request.state == "working":
             self.gateway.refresh_typing(channel_id, request.ttl_seconds)
         else:
@@ -66,6 +97,11 @@ class BridgeService:
             "delivery_id": delivery_id,
         }
 
+    def request_shutdown(self) -> int:
+        cancelled = self.store.request_shutdown()
+        self._maybe_stop_waiting()
+        return cancelled
+
     def receive_discord_reply(
         self,
         channel_id: str,
@@ -83,7 +119,11 @@ class BridgeService:
         return self.store.enqueue_reply(channel_id, reply)
 
     def wait_for_reply(self, routing: Routing, timeout_seconds: float | None) -> dict[str, object]:
-        reply = self.store.wait_for_reply(routing, timeout_seconds)
+        reply, shutdown_requested = self.store.wait_for_reply(routing, timeout_seconds)
+        self._maybe_stop_waiting()
         if reply is None:
-            return {"ok": True, "reply": None}
-        return {"ok": True, "reply": reply.to_dict()}
+            return {"ok": True, "reply": None, "shutdown": shutdown_requested}
+        return {"ok": True, "reply": reply.to_dict(), "shutdown": False}
+
+    def acknowledge_reply(self, routing: Routing, reply_id: str) -> None:
+        self.store.acknowledge_reply(routing, reply_id)

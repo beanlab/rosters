@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import contextlib
 from contextlib import contextmanager
+from dataclasses import dataclass
 import os
 from pathlib import Path
+import signal
 import subprocess
 import sys
 import time
@@ -23,7 +26,16 @@ SERVER_ROOT = BRIDGE_ROOT / "server"
 SERVER_SCRIPT = SERVER_ROOT / "run_bridge_server.py"
 START_LOCK_FILE = SERVER_ROOT / ".bridge-server.lock"
 SERVER_LOG_FILE = SERVER_ROOT / ".bridge-server.log"
+SERVER_PID_FILE = SERVER_ROOT / ".bridge-server.pid"
 LOCAL_BRIDGE_HOSTS = {"127.0.0.1", "localhost", "::1"}
+
+
+@dataclass(frozen=True, slots=True)
+class LocalBridgeStopResult:
+    stopped: bool
+    forced: bool
+    pid: int | None = None
+    signal_name: str = ""
 
 
 def ensure_local_bridge(api_base_url: str) -> None:
@@ -87,12 +99,41 @@ def _start_local_bridge_process(parsed_base_url) -> None:
             stderr=subprocess.STDOUT,
             start_new_session=True,
         )
+        SERVER_PID_FILE.write_text(f"{process.pid}\n", encoding="utf-8")
         time.sleep(0.2)
         return_code = process.poll()
         if return_code is not None:
+            _clear_server_pid_file()
             raise SystemExit(
                 f"bridge server exited immediately with code {return_code}; see {SERVER_LOG_FILE}"
             )
+
+
+def stop_local_bridge_process(timeout_seconds: float = 5.0) -> LocalBridgeStopResult:
+    pids = _discover_local_bridge_pids()
+    if not pids:
+        _clear_server_pid_file()
+        return LocalBridgeStopResult(stopped=False, forced=False)
+
+    _signal_processes(pids, signal.SIGTERM)
+    if _wait_for_exit(pids, timeout_seconds):
+        _clear_server_pid_file()
+        return LocalBridgeStopResult(
+            stopped=True,
+            forced=True,
+            pid=min(pids),
+            signal_name="SIGTERM",
+        )
+
+    _signal_processes(pids, signal.SIGKILL)
+    _wait_for_exit(pids, 1.0)
+    _clear_server_pid_file()
+    return LocalBridgeStopResult(
+        stopped=True,
+        forced=True,
+        pid=min(pids),
+        signal_name="SIGKILL",
+    )
 
 
 def _resolve_server_env_file() -> Path | None:
@@ -106,6 +147,92 @@ def _resolve_server_env_file() -> Path | None:
     if project_env.exists():
         return project_env
     return None
+
+
+def _discover_local_bridge_pids() -> list[int]:
+    pids: set[int] = set()
+
+    pid = _read_server_pid_file()
+    if pid is not None and _process_is_running(pid):
+        pids.add(pid)
+
+    if pids or os.name != "posix":
+        return sorted(pids)
+
+    try:
+        output = subprocess.check_output(
+            ["ps", "-eo", "pid=,args="],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return sorted(pids)
+
+    for raw_line in output.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        parts = line.split(None, 1)
+        if len(parts) != 2:
+            continue
+        pid_text, args = parts
+        if not _looks_like_bridge_server_command(args):
+            continue
+        with contextlib.suppress(ValueError):
+            pid = int(pid_text)
+            if pid != os.getpid() and _process_is_running(pid):
+                pids.add(pid)
+    return sorted(pids)
+
+
+def _read_server_pid_file() -> int | None:
+    try:
+        value = SERVER_PID_FILE.read_text(encoding="utf-8").strip()
+    except FileNotFoundError:
+        return None
+    if not value:
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        return None
+
+
+def _clear_server_pid_file() -> None:
+    with contextlib.suppress(FileNotFoundError):
+        SERVER_PID_FILE.unlink()
+
+
+def _looks_like_bridge_server_command(args: str) -> bool:
+    normalized = args.replace("\\", "/")
+    return normalized.endswith("/discord-bridge/server/run_bridge_server.py") or (
+        "/discord-bridge/server/run_bridge_server.py " in normalized
+    )
+
+
+def _process_is_running(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _signal_processes(pids: list[int], sig: signal.Signals) -> None:
+    for pid in pids:
+        with contextlib.suppress(ProcessLookupError, PermissionError):
+            os.kill(pid, sig)
+
+
+def _wait_for_exit(pids: list[int], timeout_seconds: float) -> bool:
+    deadline = time.monotonic() + max(0.0, timeout_seconds)
+    while time.monotonic() < deadline:
+        if not any(_process_is_running(pid) for pid in pids):
+            return True
+        time.sleep(0.1)
+    return not any(_process_is_running(pid) for pid in pids)
 
 
 @contextmanager

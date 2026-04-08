@@ -1,22 +1,25 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 from pathlib import Path
 import sys
+import threading
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 
 ROOT = Path(__file__).resolve().parent
 SRC = ROOT / "src"
+PID_FILE = ROOT / ".bridge-server.pid"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from discord_agent_bridge.config import BridgeConfig, load_config
-from discord_agent_bridge.discord_gateway import DiscordBotGateway, MemoryDiscordGateway
+from discord_agent_bridge.discord_gateway import DiscordReplyListener, DiscordRestGateway, MemoryDiscordGateway
 from discord_agent_bridge.models import MessageRequest, Routing, StateUpdateRequest, SubagentLogRequest
 from discord_agent_bridge.service import BridgeService
 from discord_agent_bridge.store import InMemoryBridgeStore
@@ -27,18 +30,23 @@ class BridgeRuntime:
         self.config = config
         self.store = InMemoryBridgeStore()
         self._shutdown_callback: callable[[], None] | None = None
-        if config.enable_bot and config.bot_key:
-            gateway = DiscordBotGateway(
-                config,
-                self._receive_reply,
-                self.clear_all_logs,
-                self.clear_all_non_general,
-                self.request_shutdown,
-            )
+        self._listener_lock = threading.Lock()
+        if config.bot_key:
+            gateway = DiscordRestGateway(config)
         else:
             gateway = MemoryDiscordGateway()
         self.gateway = gateway
-        self.service = BridgeService(self.store, self.gateway)
+        self.listener = (
+            DiscordReplyListener(config, self._receive_reply)
+            if config.enable_bot and config.bot_key
+            else None
+        )
+        self.service = BridgeService(
+            self.store,
+            self.gateway,
+            on_wait_started=self.ensure_listener_started,
+            on_wait_finished=self.stop_listener_if_idle,
+        )
 
     def _receive_reply(
         self,
@@ -58,30 +66,48 @@ class BridgeRuntime:
         self.gateway.start()
 
     def stop(self) -> None:
+        with self._listener_lock:
+            if self.listener is not None:
+                self.listener.stop()
         self.gateway.stop()
 
     def bind_shutdown_callback(self, callback: callable[[], None]) -> None:
         self._shutdown_callback = callback
 
-    def request_shutdown(self) -> None:
+    def request_shutdown(self, cancel_waiters: bool = False) -> int:
+        cancelled = self.service.request_shutdown() if cancel_waiters else 0
+        self.stop()
         if self._shutdown_callback is not None:
-            self._shutdown_callback()
+            threading.Thread(target=self._shutdown_callback, name="bridge-server-shutdown", daemon=True).start()
+        return cancelled
+
+    def ensure_listener_started(self) -> None:
+        if self.listener is None:
+            raise RuntimeError("Discord reply listening is unavailable. Check BOT_KEY and BRIDGE_ENABLE_BOT.")
+        with self._listener_lock:
+            self.listener.start()
+
+    def stop_listener_if_idle(self) -> None:
+        if self.listener is None or self.store.has_awaiting_sessions():
+            return
+        with self._listener_lock:
+            if not self.store.has_awaiting_sessions():
+                self.listener.stop()
 
     def clear_all_logs(self, guild_id: str) -> list[str]:
         channel_ids = self.store.channel_ids_for_guild(guild_id)
-        if not channel_ids:
-            return []
-        deleted = self.gateway.clear_managed_channels(guild_id, channel_ids)
+        deleted = []
+        if hasattr(self.gateway, "delete_channel"):
+            deleted = [
+                channel_id
+                for channel_id in channel_ids
+                if self.gateway.delete_channel(channel_id)
+            ]
         self.store.forget_channels(deleted)
         return deleted
 
     def clear_all_non_general(self, guild_id: str) -> tuple[list[str], list[str]]:
-        deleted, failed = self.gateway.clear_all_non_general_channels(
-            guild_id,
-            self.config.general_channel_name,
-        )
-        self.store.forget_channels(deleted)
-        return deleted, failed
+        return [], []
 
 
 class BridgeHTTPServer(ThreadingHTTPServer):
@@ -94,37 +120,57 @@ class BridgeRequestHandler(BaseHTTPRequestHandler):
     server: BridgeHTTPServer
 
     def do_GET(self) -> None:  # noqa: N802
-        parsed = urlparse(self.path)
-        if parsed.path == "/healthz":
-            self._send_json(HTTPStatus.OK, {"ok": True})
+        try:
+            parsed = urlparse(self.path)
+            if parsed.path == "/healthz":
+                self._send_json(HTTPStatus.OK, {"ok": True})
+                return
+            if parsed.path == "/v1/replies/next":
+                self._handle_get_reply(parsed.query)
+                return
+            self._send_json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "not_found"})
+        except BrokenPipeError:
             return
-        if parsed.path == "/v1/replies/next":
-            self._handle_get_reply(parsed.query)
-            return
-        self._send_json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "not_found"})
+        except Exception as exc:
+            with contextlib.suppress(BrokenPipeError):
+                self._send_json(HTTPStatus.BAD_REQUEST, {"ok": False, "error": str(exc)})
 
     def do_POST(self) -> None:  # noqa: N802
-        parsed = urlparse(self.path)
-        if not self._authorized():
-            self._send_json(HTTPStatus.UNAUTHORIZED, {"ok": False, "error": "unauthorized"})
+        try:
+            parsed = urlparse(self.path)
+            if not self._authorized():
+                self._send_json(HTTPStatus.UNAUTHORIZED, {"ok": False, "error": "unauthorized"})
+                return
+            payload = self._read_json()
+            if parsed.path == "/v1/messages":
+                request = MessageRequest.from_dict(payload)
+                result = self.server.runtime.service.post_message(request)
+                self._send_json(HTTPStatus.OK, result.to_dict())
+                return
+            if parsed.path == "/v1/state":
+                request = StateUpdateRequest.from_dict(payload)
+                result = self.server.runtime.service.update_state(request)
+                self._send_json(HTTPStatus.OK, result)
+                return
+            if parsed.path == "/v1/subagent-logs":
+                request = SubagentLogRequest.from_dict(payload)
+                result = self.server.runtime.service.post_subagent_log(request)
+                self._send_json(HTTPStatus.OK, result)
+                return
+            if parsed.path == "/v1/admin/shutdown":
+                result = {
+                    "ok": True,
+                    "cancelled_waits": self.server.runtime.request_shutdown(cancel_waiters=True),
+                    "shutdown_requested": True,
+                }
+                self._send_json(HTTPStatus.OK, result)
+                return
+            self._send_json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "not_found"})
+        except BrokenPipeError:
             return
-        payload = self._read_json()
-        if parsed.path == "/v1/messages":
-            request = MessageRequest.from_dict(payload)
-            result = self.server.runtime.service.post_message(request)
-            self._send_json(HTTPStatus.OK, result.to_dict())
-            return
-        if parsed.path == "/v1/state":
-            request = StateUpdateRequest.from_dict(payload)
-            result = self.server.runtime.service.update_state(request)
-            self._send_json(HTTPStatus.OK, result)
-            return
-        if parsed.path == "/v1/subagent-logs":
-            request = SubagentLogRequest.from_dict(payload)
-            result = self.server.runtime.service.post_subagent_log(request)
-            self._send_json(HTTPStatus.OK, result)
-            return
-        self._send_json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "not_found"})
+        except Exception as exc:
+            with contextlib.suppress(BrokenPipeError):
+                self._send_json(HTTPStatus.BAD_REQUEST, {"ok": False, "error": str(exc)})
 
     def log_message(self, format: str, *args: Any) -> None:  # noqa: A003
         return None
@@ -161,6 +207,11 @@ class BridgeRequestHandler(BaseHTTPRequestHandler):
         timeout_seconds = float(raw_timeout) if raw_timeout else None
         result = self.server.runtime.service.wait_for_reply(routing, timeout_seconds)
         self._send_json(HTTPStatus.OK, result)
+        reply = result.get("reply")
+        if isinstance(reply, dict):
+            reply_id = str(reply.get("reply_id", "")).strip()
+            if reply_id:
+                self.server.runtime.service.acknowledge_reply(routing, reply_id)
 
     def _send_json(self, status: HTTPStatus, payload: dict[str, object]) -> None:
         encoded = json.dumps(payload).encode("utf-8")
@@ -203,6 +254,8 @@ def main(argv: list[str] | None = None) -> int:
     finally:
         server.server_close()
         runtime.stop()
+        with contextlib.suppress(FileNotFoundError):
+            PID_FILE.unlink()
     return 0
 
 
