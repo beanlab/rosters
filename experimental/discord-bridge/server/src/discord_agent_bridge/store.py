@@ -27,6 +27,7 @@ class InMemoryBridgeStore:
         self._reply_condition = threading.Condition(self._lock)
         self._sessions: dict[tuple[str, str, str, str], SessionState] = {}
         self._channel_to_key: dict[str, tuple[str, str, str, str]] = {}
+        self._shutdown_requested = False
 
     def _key(self, routing: Routing) -> tuple[str, str, str, str]:
         return routing.key()
@@ -74,10 +75,34 @@ class InMemoryBridgeStore:
             session.pending_replies.clear()
             session.wait_started_at_ms = self._current_time_ms()
 
+    def cancel_waiting_for_reply(self, routing: Routing, state: str = "idle") -> None:
+        with self._lock:
+            session = self.get_or_create_session(routing)
+            session.conversation_state = state
+            session.pending_replies.clear()
+            session.wait_started_at_ms = 0
+
     def get_conversation_state(self, routing: Routing) -> str:
         with self._lock:
             session = self.get_or_create_session(routing)
             return session.conversation_state
+
+    def has_awaiting_sessions(self) -> bool:
+        with self._lock:
+            return any(session.conversation_state == "awaiting_user" for session in self._sessions.values())
+
+    def request_shutdown(self) -> int:
+        with self._reply_condition:
+            self._shutdown_requested = True
+            cancelled = 0
+            for session in self._sessions.values():
+                if session.conversation_state == "awaiting_user":
+                    cancelled += 1
+                session.conversation_state = "idle"
+                session.pending_replies.clear()
+                session.wait_started_at_ms = 0
+            self._reply_condition.notify_all()
+            return cancelled
 
     def enqueue_reply(self, channel_id: str, reply: ReplyRecord) -> Routing | None:
         with self._lock:
@@ -94,22 +119,42 @@ class InMemoryBridgeStore:
             self._reply_condition.notify_all()
             return session.routing
 
-    def wait_for_reply(self, routing: Routing, timeout_seconds: float | None) -> ReplyRecord | None:
+    def wait_for_reply(self, routing: Routing, timeout_seconds: float | None) -> tuple[ReplyRecord | None, bool]:
         key = self._key(routing)
         with self._reply_condition:
             session = self.get_or_create_session(routing)
             if session.pending_replies:
-                return self._consume_pending_reply(session)
+                return session.pending_replies[0], False
+            if self._shutdown_requested:
+                session.conversation_state = "idle"
+                session.pending_replies.clear()
+                session.wait_started_at_ms = 0
+                return None, True
             notified = self._reply_condition.wait_for(
-                lambda: bool(self._sessions[key].pending_replies),
+                lambda: self._shutdown_requested or bool(self._sessions[key].pending_replies),
                 timeout=timeout_seconds,
             )
+            if self._shutdown_requested and not self._sessions[key].pending_replies:
+                session = self._sessions[key]
+                session.conversation_state = "idle"
+                session.pending_replies.clear()
+                session.wait_started_at_ms = 0
+                return None, True
             if not notified and timeout_seconds is not None:
                 session.conversation_state = "idle"
                 session.pending_replies.clear()
                 session.wait_started_at_ms = 0
-                return None
-            return self._consume_pending_reply(self._sessions[key])
+                return None, False
+            return self._sessions[key].pending_replies[0], False
+
+    def acknowledge_reply(self, routing: Routing, reply_id: str) -> None:
+        with self._lock:
+            session = self.get_or_create_session(routing)
+            if not session.pending_replies:
+                return
+            if session.pending_replies[0].reply_id != reply_id:
+                return
+            self._consume_pending_reply(session)
 
     def channel_ids_for_guild(self, guild_id: str) -> list[str]:
         with self._lock:

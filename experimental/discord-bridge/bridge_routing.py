@@ -38,6 +38,9 @@ def common_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--api-base-url", default=os.getenv("BRIDGE_API_BASE_URL", "http://127.0.0.1:8080"))
     parser.add_argument("--api-token", default=os.getenv("BRIDGE_API_TOKEN", ""))
+    scope_group = parser.add_mutually_exclusive_group()
+    scope_group.add_argument("--top-level", action="store_true")
+    scope_group.add_argument("--subagent", action="store_true")
     parser.add_argument("--workspace-id")
     parser.add_argument("--session-id")
     parser.add_argument("--agent-id")
@@ -48,7 +51,7 @@ def common_parser() -> argparse.ArgumentParser:
 
 
 def routing_from_args(args: argparse.Namespace) -> dict[str, str]:
-    agent_kind = args.agent_kind or _default_agent_kind()
+    agent_kind = _agent_kind_from_args(args)
     if agent_kind == "subagent":
         agent_name, agent_id = _subagent_identity_from_args(args)
         workspace_id = _subagent_workspace_id(args)
@@ -70,9 +73,9 @@ def routing_from_args(args: argparse.Namespace) -> dict[str, str]:
 
 
 def subagent_log_routing_from_args(args: argparse.Namespace) -> dict[str, str]:
-    if getattr(args, "command", "") != "subagent-log":
+    if getattr(args, "command", "") not in {"subagent-log", "log"}:
         return routing_from_args(args)
-    agent_kind = args.agent_kind or _default_agent_kind()
+    agent_kind = _agent_kind_from_args(args)
     if agent_kind == "subagent":
         workspace_id = _subagent_workspace_id(args)
         session_id = _subagent_session_id(args)
@@ -122,14 +125,22 @@ def _default_agent_kind() -> str:
     if _has_ambiguous_thread_identity():
         raise SystemExit(
             "ambiguous bridge routing: only CODEX_THREAD_ID is available. "
-            "Pass --agent-kind explicitly or use .myteam/discord-bridge/bridge_main.py / "
-            ".myteam/discord-bridge/bridge_subagent.py."
+            "Pass --agent-kind explicitly or use .myteam/discord-bridge/bridge_chat.py "
+            "with --top-level or --subagent."
         )
     return "top_level"
 
 
+def _agent_kind_from_args(args: argparse.Namespace) -> str:
+    if getattr(args, "top_level", False):
+        return "top_level"
+    if getattr(args, "subagent", False):
+        return "subagent"
+    return args.agent_kind or _default_agent_kind()
+
+
 def _spawn_name_env() -> str:
-    for key in ("CODEX_SPAWN_NAME", "CODEX_AGENT_NAME", "MYTEAM_AGENT_NAME", "BRIDGE_AGENT_NAME"):
+    for key in ("BRIDGE_AGENT_NAME", "CODEX_SPAWN_NAME", "CODEX_AGENT_NAME", "MYTEAM_AGENT_NAME"):
         value = os.getenv(key, "").strip()
         if value:
             return value
@@ -137,7 +148,7 @@ def _spawn_name_env() -> str:
 
 
 def _spawn_id_env() -> str:
-    for key in ("CODEX_SPAWN_ID", "CODEX_AGENT_ID", "MYTEAM_AGENT_ID", "CODEX_THREAD_ID"):
+    for key in ("BRIDGE_AGENT_ID", "CODEX_SPAWN_ID", "CODEX_AGENT_ID", "MYTEAM_AGENT_ID"):
         value = os.getenv(key, "").strip()
         if value:
             return value
@@ -185,9 +196,9 @@ def _has_explicit_subagent_identity() -> bool:
     # spawn-specific identity. A bare thread ID is too broad and can leak into
     # the top-level agent environment, which collapses Main into a subagent
     # channel unless callers override agent-kind explicitly.
-    if any(os.getenv(key, "").strip() for key in ("CODEX_SPAWN_ID", "CODEX_AGENT_ID", "MYTEAM_AGENT_ID")):
+    if any(os.getenv(key, "").strip() for key in ("BRIDGE_AGENT_ID", "CODEX_SPAWN_ID", "CODEX_AGENT_ID", "MYTEAM_AGENT_ID")):
         return True
-    if any(os.getenv(key, "").strip() for key in ("CODEX_SPAWN_NAME", "CODEX_AGENT_NAME", "MYTEAM_AGENT_NAME")):
+    if any(os.getenv(key, "").strip() for key in ("BRIDGE_AGENT_NAME", "CODEX_SPAWN_NAME", "CODEX_AGENT_NAME", "MYTEAM_AGENT_NAME")):
         return True
     return False
 
@@ -202,16 +213,21 @@ def resolve_subagent_identity(agent_id: str = "", agent_name: str = "") -> tuple
     resolved_name = (agent_name or spawn_name).strip()
     resolved_id = (agent_id or spawn_id).strip()
     if not resolved_id:
-        resolved_id = _thread_id_env()
+        thread_id = _thread_id_env()
+        if thread_id:
+            raise SystemExit(
+                "ambiguous subagent routing agent_id: CODEX_THREAD_ID is not spawn-specific enough; "
+                "pass --agent-id or set BRIDGE_AGENT_ID, CODEX_SPAWN_ID, CODEX_AGENT_ID, or MYTEAM_AGENT_ID"
+            )
     if not resolved_id and resolved_name:
         raise SystemExit(
-            "missing subagent routing agent_id: pass --agent-id or set CODEX_SPAWN_ID, "
-            "CODEX_AGENT_ID, MYTEAM_AGENT_ID, or CODEX_THREAD_ID; agent_name alone is not enough"
+            "missing subagent routing agent_id: pass --agent-id or set BRIDGE_AGENT_ID, "
+            "CODEX_SPAWN_ID, CODEX_AGENT_ID, or MYTEAM_AGENT_ID; agent_name alone is not enough"
         )
     if not resolved_id:
         raise SystemExit(
-            "missing subagent routing agent_id: pass --agent-id or set CODEX_SPAWN_ID, "
-            "CODEX_AGENT_ID, MYTEAM_AGENT_ID, or CODEX_THREAD_ID"
+            "missing subagent routing agent_id: pass --agent-id or set BRIDGE_AGENT_ID, "
+            "CODEX_SPAWN_ID, CODEX_AGENT_ID, or MYTEAM_AGENT_ID"
         )
     if not resolved_name:
         resolved_name = resolved_id

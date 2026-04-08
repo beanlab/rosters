@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import asyncio
-from concurrent.futures import Future
 import contextlib
 import hashlib
+import json
 import threading
 import time
-from typing import Callable, Protocol
+from typing import Any, Callable, Protocol
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 
 from .config import BridgeConfig
 from .models import Routing
@@ -15,6 +17,9 @@ try:
     import discord
 except ImportError:  # pragma: no cover - optional at runtime
     discord = None
+
+
+DISCORD_API_BASE_URL = "https://discord.com/api/v10"
 
 
 def _slugify_name_part(value: str) -> str:
@@ -46,6 +51,16 @@ def render_channel_topic(routing: Routing) -> str:
     )
 
 
+def parse_channel_topic(topic: str) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for part in topic.split():
+        if "=" not in part:
+            continue
+        key, value = part.split("=", 1)
+        values[key] = value
+    return values
+
+
 class DiscordGateway(Protocol):
     def start(self) -> None: ...
     def stop(self) -> None: ...
@@ -53,16 +68,6 @@ class DiscordGateway(Protocol):
     def send_message(self, channel_id: str, content: str) -> str: ...
     def refresh_typing(self, channel_id: str, ttl_seconds: int) -> None: ...
     def stop_typing(self, channel_id: str) -> None: ...
-    def clear_managed_channels(
-        self,
-        guild_id: str,
-        channel_ids: list[str],
-    ) -> list[str]: ...
-    def clear_all_non_general_channels(
-        self,
-        guild_id: str,
-        general_channel_name: str,
-    ) -> tuple[list[str], list[str]]: ...
 
 
 class MemoryDiscordGateway:
@@ -114,52 +119,261 @@ class MemoryDiscordGateway:
     def stop_typing(self, channel_id: str) -> None:
         self.stopped_typing.append(channel_id)
 
-    def clear_managed_channels(
-        self,
-        guild_id: str,
-        channel_ids: list[str],
-    ) -> list[str]:
-        deleted: list[str] = []
-        for channel_id in channel_ids:
-            channel = self.channels.get(channel_id)
+    def delete_channel(self, channel_id: str) -> bool:
+        if channel_id not in self.channels:
+            return False
+        self.channels.pop(channel_id, None)
+        self.messages.pop(channel_id, None)
+        self.deleted_channels.append(channel_id)
+        return True
+
+    def find_channel_id_for_routing(self, routing: Routing) -> str | None:
+        expected_topic = render_channel_topic(routing)
+        for channel_id, channel in self.channels.items():
             if (
-                channel is None
-                or channel.get("guild_id") != guild_id
+                channel.get("guild_id") == routing.discord_guild_id
+                and channel.get("topic") == expected_topic
             ):
-                continue
-            deleted.append(channel_id)
-            self.channels.pop(channel_id, None)
-            self.messages.pop(channel_id, None)
-        self.deleted_channels.extend(deleted)
-        return deleted
+                return channel_id
+        return None
 
-    def clear_all_non_general_channels(
+    def find_session_channel_ids(
         self,
         guild_id: str,
-        general_channel_name: str,
-    ) -> tuple[list[str], list[str]]:
-        deleted: list[str] = []
-        for channel_id, channel in list(self.channels.items()):
-            if channel.get("guild_id") != guild_id or channel.get("name") == general_channel_name:
+        workspace_id: str,
+        session_id: str,
+        agent_kind: str | None = None,
+    ) -> list[str]:
+        matches: list[str] = []
+        for channel_id, channel in self.channels.items():
+            if channel.get("guild_id") != guild_id:
                 continue
-            deleted.append(channel_id)
-            self.channels.pop(channel_id, None)
-            self.messages.pop(channel_id, None)
-        self.deleted_channels.extend(deleted)
-        return deleted, []
+            topic_values = parse_channel_topic(channel.get("topic", ""))
+            if topic_values.get("workspace") != workspace_id:
+                continue
+            if topic_values.get("session") != session_id:
+                continue
+            if agent_kind and topic_values.get("kind") != agent_kind:
+                continue
+            matches.append(channel_id)
+        return matches
 
 
-class DiscordBotGateway:
-    _EXIT_ACK_TIMEOUT_SECONDS = 1.5
+class _TypingHeartbeatManager:
+    def __init__(self, trigger_typing: Callable[[str], None], interval_seconds: int) -> None:
+        self._trigger_typing = trigger_typing
+        self._interval_seconds = max(1, interval_seconds)
+        self._lock = threading.Lock()
+        self._deadlines: dict[str, float] = {}
+        self._threads: dict[str, threading.Thread] = {}
+
+    def refresh(self, channel_id: str, ttl_seconds: int) -> None:
+        with self._lock:
+            self._deadlines[channel_id] = time.monotonic() + max(0, ttl_seconds)
+            thread = self._threads.get(channel_id)
+            if thread is None or not thread.is_alive():
+                thread = threading.Thread(
+                    target=self._run,
+                    args=(channel_id,),
+                    name=f"discord-typing-{channel_id}",
+                    daemon=True,
+                )
+                self._threads[channel_id] = thread
+                thread.start()
+
+    def stop(self, channel_id: str) -> None:
+        with self._lock:
+            self._deadlines[channel_id] = 0
+
+    def close(self) -> None:
+        with self._lock:
+            for channel_id in list(self._deadlines):
+                self._deadlines[channel_id] = 0
+
+    def _run(self, channel_id: str) -> None:
+        while True:
+            with self._lock:
+                deadline = self._deadlines.get(channel_id, 0)
+            if time.monotonic() >= deadline:
+                with self._lock:
+                    self._threads.pop(channel_id, None)
+                    self._deadlines.pop(channel_id, None)
+                return
+            with contextlib.suppress(Exception):
+                self._trigger_typing(channel_id)
+            time.sleep(self._interval_seconds)
+
+
+class DiscordRestGateway:
+    def __init__(self, config: BridgeConfig) -> None:
+        self._config = config
+        self._typing = _TypingHeartbeatManager(self._trigger_typing_now, config.typing_heartbeat_seconds)
+
+    def start(self) -> None:
+        return None
+
+    def stop(self) -> None:
+        self._typing.close()
+
+    def ensure_channel(self, routing: Routing, existing_channel_id: str | None) -> str:
+        self._require_bot_key("create Discord channels")
+        if existing_channel_id:
+            channel = self.get_channel(existing_channel_id, not_found_ok=True)
+            if channel and str(channel.get("guild_id", "")) == routing.discord_guild_id:
+                return str(channel["id"])
+
+        channel = self._find_channel_by_topic(routing.discord_guild_id, render_channel_topic(routing))
+        if channel is None:
+            channel = self._request(
+                "POST",
+                f"/guilds/{routing.discord_guild_id}/channels",
+                {
+                    "name": slugify_channel_name(
+                        routing.agent_kind,
+                        routing.agent_name,
+                        routing.agent_id,
+                    ),
+                    "topic": render_channel_topic(routing),
+                    "type": 0,
+                },
+            )
+        return str(channel["id"])
+
+    def send_message(self, channel_id: str, content: str) -> str:
+        self._require_bot_key("send Discord messages")
+        response = self._request(
+            "POST",
+            f"/channels/{channel_id}/messages",
+            {"content": content},
+        )
+        return str(response["id"])
+
+    def refresh_typing(self, channel_id: str, ttl_seconds: int) -> None:
+        if not self._config.bot_key:
+            return
+        self._typing.refresh(channel_id, ttl_seconds)
+
+    def stop_typing(self, channel_id: str) -> None:
+        self._typing.stop(channel_id)
+
+    def delete_channel(self, channel_id: str) -> bool:
+        self._require_bot_key("delete Discord channels")
+        channel = self.get_channel(channel_id, not_found_ok=True)
+        if channel is None:
+            return False
+        self._request("DELETE", f"/channels/{channel_id}", not_found_ok=True)
+        return True
+
+    def get_channel(self, channel_id: str, not_found_ok: bool = False) -> dict[str, Any] | None:
+        return self._request("GET", f"/channels/{channel_id}", not_found_ok=not_found_ok)
+
+    def find_channel_id_for_routing(self, routing: Routing) -> str | None:
+        channel = self._find_channel_by_topic(routing.discord_guild_id, render_channel_topic(routing))
+        if channel is None:
+            return None
+        return str(channel["id"])
+
+    def find_session_channel_ids(
+        self,
+        guild_id: str,
+        workspace_id: str,
+        session_id: str,
+        agent_kind: str | None = None,
+    ) -> list[str]:
+        channels = self._list_guild_channels(guild_id)
+        matches: list[str] = []
+        for channel in channels:
+            topic_values = parse_channel_topic(str(channel.get("topic", "")))
+            if topic_values.get("workspace") != workspace_id:
+                continue
+            if topic_values.get("session") != session_id:
+                continue
+            if agent_kind and topic_values.get("kind") != agent_kind:
+                continue
+            matches.append(str(channel["id"]))
+        return matches
+
+    def find_guild_text_channel_ids(
+        self,
+        guild_id: str,
+        *,
+        exclude_names: set[str] | None = None,
+    ) -> list[str]:
+        excluded = {name.strip().lower() for name in (exclude_names or set()) if name.strip()}
+        matches: list[str] = []
+        for channel in self._list_guild_channels(guild_id):
+            if str(channel.get("name", "")).strip().lower() in excluded:
+                continue
+            matches.append(str(channel["id"]))
+        return matches
+
+    def _find_channel_by_topic(self, guild_id: str, topic: str) -> dict[str, Any] | None:
+        for channel in self._list_guild_channels(guild_id):
+            if str(channel.get("topic", "")) == topic:
+                return channel
+        return None
+
+    def _list_guild_channels(self, guild_id: str) -> list[dict[str, Any]]:
+        channels = self._request("GET", f"/guilds/{guild_id}/channels")
+        return [
+            channel
+            for channel in channels
+            if int(channel.get("type", -1)) == 0
+        ]
+
+    def _trigger_typing_now(self, channel_id: str) -> None:
+        self._request("POST", f"/channels/{channel_id}/typing")
+
+    def _require_bot_key(self, action: str) -> None:
+        if not self._config.bot_key:
+            raise RuntimeError(f"BOT_KEY is required to {action}.")
+
+    def _request(
+        self,
+        method: str,
+        path: str,
+        payload: dict[str, Any] | None = None,
+        *,
+        not_found_ok: bool = False,
+    ) -> Any:
+        self._require_bot_key("access Discord")
+        url = f"{DISCORD_API_BASE_URL}{path}"
+        headers = {
+            "Authorization": f"Bot {self._config.bot_key}",
+            "User-Agent": "discord-agent-bridge/1.0",
+        }
+        encoded_payload = None if payload is None else json.dumps(payload).encode("utf-8")
+        if encoded_payload is not None:
+            headers["Content-Type"] = "application/json"
+
+        while True:
+            request = Request(url=url, method=method, data=encoded_payload, headers=headers)
+            try:
+                with urlopen(request, timeout=30) as response:
+                    body = response.read().decode("utf-8")
+                    if not body:
+                        return {}
+                    return json.loads(body)
+            except HTTPError as exc:
+                body = exc.read().decode("utf-8", errors="replace")
+                if exc.code == 404 and not_found_ok:
+                    return None
+                if exc.code == 429:
+                    retry_after = 1.0
+                    with contextlib.suppress(Exception):
+                        retry_after = max(0.25, float(json.loads(body).get("retry_after", 1.0)))
+                    time.sleep(retry_after)
+                    continue
+                raise RuntimeError(f"Discord API request failed: {exc.code} {body}") from exc
+
+
+class DiscordReplyListener:
     _SHUTDOWN_TIMEOUT_SECONDS = 2.0
 
     def __init__(
         self,
         config: BridgeConfig,
         on_user_reply: Callable[[str, str, str, str], None],
-        on_clear_logs: Callable[[str], list[str]],
-        on_clear_all: Callable[[str], tuple[list[str], list[str]]],
-        on_exit: Callable[[], None],
     ) -> None:
         if discord is None:
             raise RuntimeError(
@@ -167,76 +381,58 @@ class DiscordBotGateway:
             )
         self._config = config
         self._on_user_reply = on_user_reply
-        self._on_clear_logs = on_clear_logs
-        self._on_clear_all = on_clear_all
-        self._on_exit = on_exit
         self._loop: asyncio.AbstractEventLoop | None = None
         self._thread: threading.Thread | None = None
+        self._client: discord.Client | None = None
         self._ready = threading.Event()
-        self._typing_deadlines: dict[str, float] = {}
-        self._typing_tasks: dict[str, asyncio.Task[None]] = {}
+        self._lock = threading.Lock()
+
+    def start(self) -> None:
+        if not self._config.bot_key:
+            raise RuntimeError("BOT_KEY is required to listen for Discord replies.")
+        with self._lock:
+            if self._thread is not None:
+                return
+            self._ready.clear()
+            self._client = self._build_client()
+            self._thread = threading.Thread(target=self._run, name="discord-reply-listener", daemon=True)
+            self._thread.start()
+        if not self._ready.wait(timeout=20):
+            raise RuntimeError("Discord reply listener did not become ready within 20 seconds.")
+
+    def stop(self) -> None:
+        with self._lock:
+            loop = self._loop
+            client = self._client
+            thread = self._thread
+        if loop is None or client is None:
+            return
+        with contextlib.suppress(Exception):
+            future = asyncio.run_coroutine_threadsafe(client.close(), loop)
+            future.result(timeout=self._SHUTDOWN_TIMEOUT_SECONDS)
+        if thread is not None:
+            thread.join(timeout=self._SHUTDOWN_TIMEOUT_SECONDS)
+        with self._lock:
+            if self._thread is thread and thread is not None and not thread.is_alive():
+                self._thread = None
+                self._client = None
+
+    def _build_client(self) -> discord.Client:
         intents = discord.Intents.default()
         intents.guilds = True
         intents.messages = True
         intents.message_content = True
-        self._client = discord.Client(intents=intents)
-        self._install_handlers()
+        client = discord.Client(intents=intents)
 
-    def _render_clear_all_result(self, deleted: list[str], failed: list[str]) -> str:
-        if not deleted and not failed:
-            return "No non-general channels found to clear."
-        if failed:
-            return f"Cleared {len(deleted)} channels. Failed to delete {len(failed)} channels."
-        return f"Cleared {len(deleted)} channels."
-
-    async def _run_clear_all_from_message(self, message: discord.Message) -> None:
-        report_channel = message.channel
-        if getattr(message.channel, "name", "") != self._config.general_channel_name:
-            general_channel = discord.utils.get(
-                message.guild.text_channels,
-                name=self._config.general_channel_name,
-            )
-            if general_channel is not None:
-                report_channel = general_channel
-        with contextlib.suppress(Exception):
-            await report_channel.send("Clearing channels...")
-        deleted, failed = await asyncio.to_thread(self._on_clear_all, str(message.guild.id))
-        with contextlib.suppress(Exception):
-            await report_channel.send(self._render_clear_all_result(deleted, failed))
-
-    async def _run_exit_from_message(self, message: discord.Message) -> None:
-        with contextlib.suppress(Exception):
-            await asyncio.wait_for(
-                message.channel.send("Shutting down bridge server..."),
-                timeout=self._EXIT_ACK_TIMEOUT_SECONDS,
-            )
-        await asyncio.to_thread(self._on_exit)
-
-    def _install_handlers(self) -> None:
-        @self._client.event
+        @client.event
         async def on_ready() -> None:
             self._ready.set()
 
-        @self._client.event
+        @client.event
         async def on_message(message: discord.Message) -> None:
-            if message.author == self._client.user:
+            if message.author == client.user:
                 return
             if not message.guild:
-                return
-            if message.content.strip() == ".clear_all_logs":
-                deleted = self._on_clear_logs(str(message.guild.id))
-                if not deleted:
-                    with contextlib.suppress(Exception):
-                        await message.channel.send("No managed log channels found.")
-                elif str(message.channel.id) not in deleted:
-                    with contextlib.suppress(Exception):
-                        await message.channel.send(f"Cleared {len(deleted)} managed log channels.")
-                return
-            if message.content.strip() == ".clear_all":
-                asyncio.create_task(self._run_clear_all_from_message(message))
-                return
-            if message.content.strip() == ".exit":
-                asyncio.create_task(self._run_exit_from_message(message))
                 return
             self._on_user_reply(
                 str(message.channel.id),
@@ -245,192 +441,24 @@ class DiscordBotGateway:
                 str(message.id),
             )
 
-    def start(self) -> None:
-        if not self._config.bot_key:
-            return
-        if self._thread is not None:
-            return
-        self._thread = threading.Thread(target=self._run, name="discord-bot", daemon=True)
-        self._thread.start()
-        self._ready.wait(timeout=20)
+        return client
 
     def _run(self) -> None:
         loop = asyncio.new_event_loop()
-        self._loop = loop
+        with self._lock:
+            self._loop = loop
+            client = self._client
         asyncio.set_event_loop(loop)
         try:
-            loop.run_until_complete(self._client.start(self._config.bot_key))
+            if client is None:
+                return
+            loop.run_until_complete(client.start(self._config.bot_key))
         finally:
-            self._loop = None
+            with self._lock:
+                self._loop = None
+                self._thread = None
+                self._client = None
             self._ready.clear()
             with contextlib.suppress(Exception):
                 loop.run_until_complete(loop.shutdown_asyncgens())
             loop.close()
-
-    def _submit(self, coro: asyncio.Future) -> Future:
-        if self._loop is None:
-            raise RuntimeError("Discord bot loop is not running.")
-        return asyncio.run_coroutine_threadsafe(coro, self._loop)
-
-    def stop(self) -> None:
-        loop = self._loop
-        if loop is None:
-            return
-        with contextlib.suppress(Exception):
-            future = asyncio.run_coroutine_threadsafe(self._client.close(), loop)
-            future.result(timeout=self._SHUTDOWN_TIMEOUT_SECONDS)
-        if self._thread is not None:
-            self._thread.join(timeout=self._SHUTDOWN_TIMEOUT_SECONDS)
-            if not self._thread.is_alive():
-                self._thread = None
-
-    async def _ensure_channel_async(self, routing: Routing, existing_channel_id: str | None) -> str:
-        guild = self._client.get_guild(int(routing.discord_guild_id))
-        if guild is None:
-            guild = await self._client.fetch_guild(int(routing.discord_guild_id))
-        channel = None
-        if existing_channel_id:
-            channel = guild.get_channel(int(existing_channel_id))
-        if channel is None:
-            expected_topic = render_channel_topic(routing)
-            for candidate in guild.text_channels:
-                if getattr(candidate, "topic", None) == expected_topic:
-                    channel = candidate
-                    break
-        if channel is None:
-            channel = await guild.create_text_channel(
-                slugify_channel_name(
-                    routing.agent_kind,
-                    routing.agent_name,
-                    routing.agent_id,
-                ),
-                topic=render_channel_topic(routing),
-            )
-        return str(channel.id)
-
-    def ensure_channel(self, routing: Routing, existing_channel_id: str | None) -> str:
-        if not self._config.bot_key:
-            raise RuntimeError("BOT_KEY is required to create Discord channels.")
-        future = self._submit(self._ensure_channel_async(routing, existing_channel_id))
-        return future.result(timeout=30)
-
-    async def _send_message_async(self, channel_id: str, content: str) -> str:
-        channel = self._client.get_channel(int(channel_id))
-        if channel is None:
-            channel = await self._client.fetch_channel(int(channel_id))
-        message = await channel.send(content)
-        return str(message.id)
-
-    def send_message(self, channel_id: str, content: str) -> str:
-        future = self._submit(self._send_message_async(channel_id, content))
-        return future.result(timeout=30)
-
-    async def _typing_loop(self, channel_id: str) -> None:
-        channel = self._client.get_channel(int(channel_id))
-        if channel is None:
-            channel = await self._client.fetch_channel(int(channel_id))
-        while True:
-            deadline = self._typing_deadlines.get(channel_id, 0)
-            if time.monotonic() >= deadline:
-                return
-            with contextlib.suppress(Exception):
-                await channel.trigger_typing()
-            await asyncio.sleep(max(1, self._config.typing_heartbeat_seconds))
-
-    def refresh_typing(self, channel_id: str, ttl_seconds: int) -> None:
-        if not self._config.bot_key or self._loop is None:
-            return
-        self._typing_deadlines[channel_id] = time.monotonic() + ttl_seconds
-        task = self._typing_tasks.get(channel_id)
-        if task is None or task.done():
-            self._typing_tasks[channel_id] = self._submit(self._typing_loop(channel_id))
-
-    def stop_typing(self, channel_id: str) -> None:
-        self._typing_deadlines[channel_id] = 0
-
-    async def _delete_channel_async(self, channel_id: str) -> bool:
-        channel = self._client.get_channel(int(channel_id))
-        if channel is None:
-            with contextlib.suppress(Exception):
-                channel = await self._client.fetch_channel(int(channel_id))
-        if channel is None:
-            return False
-        with contextlib.suppress(Exception):
-            await channel.delete(reason="Requested via .clear_all_logs")
-            return True
-        return False
-
-    def clear_managed_channels(
-        self,
-        guild_id: str,
-        channel_ids: list[str],
-    ) -> list[str]:
-        if not self._config.bot_key:
-            return []
-        deleted: list[str] = []
-        for channel_id in channel_ids:
-            channel = self._client.get_channel(int(channel_id))
-            if channel is not None:
-                if getattr(channel, "guild", None) is None or str(channel.guild.id) != guild_id:
-                    continue
-            future = self._submit(self._delete_channel_async(channel_id))
-            if future.result(timeout=30):
-                deleted.append(channel_id)
-        return deleted
-
-    async def _clear_all_non_general_channels_async(
-        self,
-        guild_id: str,
-        general_channel_name: str,
-    ) -> tuple[list[str], list[str]]:
-        guild = self._client.get_guild(int(guild_id))
-        if guild is None:
-            guild = await self._client.fetch_guild(int(guild_id))
-        channels = [
-            channel
-            for channel in await guild.fetch_channels()
-            if getattr(channel, "name", "") != general_channel_name
-        ]
-        ordered_channels = sorted(
-            channels,
-            key=lambda channel: 1 if getattr(channel, "type", None) == discord.ChannelType.category else 0,
-        )
-        parallelism = max(1, self._config.clear_all_parallelism)
-
-        async def delete_batch(batch: list[discord.abc.GuildChannel]) -> tuple[list[str], list[str]]:
-            results = await asyncio.gather(
-                *(self._delete_channel_for_clear_all(channel) for channel in batch),
-            )
-            deleted_batch = [channel_id for channel_id, ok in results if ok]
-            failed_batch = [channel_id for channel_id, ok in results if not ok]
-            return deleted_batch, failed_batch
-
-        deleted: list[str] = []
-        failed: list[str] = []
-        for start in range(0, len(ordered_channels), parallelism):
-            batch = ordered_channels[start : start + parallelism]
-            deleted_batch, failed_batch = await delete_batch(batch)
-            deleted.extend(deleted_batch)
-            failed.extend(failed_batch)
-        return deleted, failed
-
-    async def _delete_channel_for_clear_all(
-        self,
-        channel: discord.abc.GuildChannel,
-    ) -> tuple[str, bool]:
-        channel_id = str(channel.id)
-        try:
-            await channel.delete(reason="Requested via .clear_all")
-            return channel_id, True
-        except Exception:
-            return channel_id, False
-
-    def clear_all_non_general_channels(
-        self,
-        guild_id: str,
-        general_channel_name: str,
-    ) -> tuple[list[str], list[str]]:
-        if not self._config.bot_key:
-            return [], []
-        future = self._submit(self._clear_all_non_general_channels_async(guild_id, general_channel_name))
-        return future.result(timeout=60)

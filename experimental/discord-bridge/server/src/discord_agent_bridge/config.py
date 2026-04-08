@@ -34,7 +34,6 @@ class BridgeConfig:
     default_guild_id: str = ""
     general_channel_name: str = "general"
     clear_all_parallelism: int = 4
-    reply_timeout_seconds: int = 300
     typing_heartbeat_seconds: int = 8
     enable_bot: bool = True
 
@@ -57,7 +56,6 @@ def load_config(env_file: str | None = None) -> BridgeConfig:
         default_guild_id=os.getenv("DISCORD_GUILD_ID", ""),
         general_channel_name=os.getenv("DISCORD_GENERAL_CHANNEL_NAME", "general"),
         clear_all_parallelism=max(1, int(os.getenv("BRIDGE_CLEAR_ALL_PARALLELISM", "4"))),
-        reply_timeout_seconds=int(os.getenv("BRIDGE_REPLY_TIMEOUT_SECONDS", "300")),
         typing_heartbeat_seconds=int(os.getenv("BRIDGE_TYPING_HEARTBEAT_SECONDS", "8")),
         enable_bot=env_flag("BRIDGE_ENABLE_BOT", True),
     )
