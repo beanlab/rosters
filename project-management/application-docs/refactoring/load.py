@@ -12,8 +12,12 @@ def main() -> int:
     myteam = get_active_myteam_root(base)
 
     print_instructions(base)
-    print((base.parent / 'intent.md').read_text())
-    print((base.parent / 'structure.md').read_text())
+    docs = [
+        "intent.md",
+        "structure.md",
+    ]
+    for doc in docs:
+        print((base / doc).read_text())
 
     application_docs = myteam.parent / 'application-design'
     if application_docs.exists():
