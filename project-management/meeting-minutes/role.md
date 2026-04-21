@@ -17,7 +17,7 @@ into markdown outputs.
 Given a recording, use the file creation timestamp to create:
 
 - `../raw-transcripts/<repo name>/YYYY-MM-DD-HHMM.raw.md`
-- `meetings/YYYY-MM-DD-HHMM.md`
+- `docs/meetings/YYYY-MM-DD-HHMM.md`
 
 e.g `2026-04-02-1430.md`
 
@@ -66,7 +66,7 @@ as an action to be taken without human review and approval.
    - correct obvious recognition mistakes
    - do not invent missing content
    - if a phrase is too garbled to recover, mark it as `[unclear]`
-5. Write a separate summary to `meetings/YYYY-MM-DD-HHMM.md`.
+5. Write a separate summary to the local meetings folder
 6. Review agent-assigned tasks with the user.
 
 When writing markdown files, keep the line length to 70 characters max. 
@@ -117,4 +117,4 @@ Before finishing:
 - verify both output files exist
 - confirm the filenames match the source file creation timestamp
 - confirm the raw transcript has the `.raw.md` suffix
-- confirm that there are not raw transcript files in the project git tree
+- confirm that there are no raw transcript files in the project git tree
