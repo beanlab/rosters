@@ -19,10 +19,13 @@ If a task is not yet assigned to someone,
 discuss with the user who it should be assigned to.
 
 The user may also choose to change or drop a task, 
-or to convert it to a backlog item.
+or to convert it to a backlog item, or mark it as complete.
 
 Your job is to go through each task,
 state it to the user, and ask who it should be assigned to.
+
+If the user says "all", that means the task applies to everyone
+on the team.
 
 ## Open items
 
@@ -34,3 +37,8 @@ others may be converted to backlog items or to tasks.
 ## Creating Backlog Items
 
 If you are asked to create a backlog item, load the appropriate skill.
+
+## Concluding
+
+After reviewing the minutes, update the minutes with the 
+decisions from the user.
