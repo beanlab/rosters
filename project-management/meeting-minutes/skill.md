@@ -1,15 +1,12 @@
 ---
 name: Meeting Minutes
 description: |
-  Transcribe an audio recording into a cleaned raw transcript and a
-  meeting summary.
-  Delegate to this role if you are tasked with transcribing audio files
-  or summarizing transcripts into meeting minutes.
+  Load this skill if you need to prepare or review meeting minutes.
 ---
 
 # Transcription
 
-The role outlines the process for preparing meeting minutes.
+This skill outlines the process for preparing meeting minutes.
 
 ## High level workflow
 
