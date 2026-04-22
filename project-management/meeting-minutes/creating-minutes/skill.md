@@ -44,18 +44,19 @@ Each section should include:
 
 ### Designs
 
-Some meetings may have very technical design discussions.
+Some meetings may have very technical discussions.
 Capture these portions of the meeting in more depth than 
 the administrative details.
 
-Provide a complete account of both the ultimate design decisions 
-and the designs that were rejected and why.
+Provide a complete account of the designs or work presented,
+as well as ultimate design decisions made and the designs that were rejected and why.
  
 Review this portion of the transcript and compare it to your summary.
-Are there details missing? Does the summary contain all the information
-discussed to continue forward with the design? 
-The design itself might not be complete or ready for implementation,
-but the summary of the design discussion should not lose important
+Are there details missing? 
+Does the summary contain all the information discussed? 
+
+The design or work itself might not be complete or ready for implementation,
+but the summary of the discussion should not lose important
 information already presented. 
 
 ## Scope
