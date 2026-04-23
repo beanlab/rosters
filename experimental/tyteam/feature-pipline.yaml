@@ -1,0 +1,33 @@
+#example-step:
+#  prompt: required, must be a string, this is the progressive disclosure of instructions sent to codex
+#  input: optional, must be a mapping but allows lists
+#  output: required, must be a mapping
+
+understand-feature:
+  prompt: |
+    Load the asking-questions skill to thoroughly understand what feature should be added
+  output:
+    summary: summary of what the user wants to implement
+
+create-git-branch:
+  prompt: Confirm we are not on main, and create a new branch if we are.
+  ouptut:
+    branch: name of the branch
+
+understand-context:
+  prompt: |
+    Read application_interface.md to understand what behavior should be changed/added
+    and what should not be changed.
+  input: $understand-feature.output.summary
+  output:
+    should-change: What should be changed/added (summary, evidence, confidence level, complexity level)
+    should-not-change: What should not be changed (summary, evidence, confidence level)
+
+review-changes-with-user:
+  prompt: | 
+    Ask the user to review your changes to the interface document and wait for **explicit** confirmation or
+  input: $understand-context.output
+  ouptut:
+    confirmed: did the
+
+
