@@ -4,6 +4,8 @@ description: |
   Delegate to this role to ensure that backlog documents created from meeting transcripts
   contain all the relevant details.
   When delegating, provide the link to the raw transcript and the backlog document.
+  This role is tasked with updating the backlog document. 
+  They will report back on the changes they made.
 ---
 
 # Backlog Details Reviewer
@@ -29,3 +31,5 @@ If there are details in the raw transcript that are unclear,
 but appear to apply to your backlog item,
 return a list of questions + context so the user
 knows what details to fill in.
+
+Finally, provide a short summary of any changes you made to the backlog document.
