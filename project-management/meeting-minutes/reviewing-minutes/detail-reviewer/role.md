@@ -24,3 +24,8 @@ relating to the backlog document.
 
 Be sure to load the backlog subskill (under project-management)
 before starting.
+
+If there are details in the raw transcript that are unclear, 
+but appear to apply to your backlog item,
+return a list of questions + context so the user
+knows what details to fill in.
