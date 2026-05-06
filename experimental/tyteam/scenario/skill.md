@@ -131,7 +131,7 @@ Each scenario file must contain the following sections.
 
 ## Purpose
 
-<Short explanation of the capability>
+<10 words or less explanation of the capability>
 
 ---
 
@@ -153,7 +153,7 @@ Each scenario file must contain the following sections.
 
 ---
 
-# Non-Goals
+# Non-Goals (Optional)
 
 <Explicit exclusions>
 
