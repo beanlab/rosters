@@ -41,7 +41,7 @@ others may be converted to backlog items or to tasks.
 
 If you are asked to create a backlog item, load the appropriate skill.
 
-After the backlog document is created, 
+After the backlog document is created, 11
 ## Concluding
 
 Tell the user that the review is complete and given them the
