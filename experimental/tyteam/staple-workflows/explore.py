@@ -6,8 +6,8 @@ import tempfile
 from pathlib import Path
 from textwrap import dedent
 
-from myteam.workflow.models import StepResult
-from myteam.workflow.steps import AgentContext
+from myteam.workflow import StepResult
+from myteam.workflow import AgentContext
 
 AGENT = "codex"
 MODEL = "gpt-5.4-mini"
@@ -172,7 +172,7 @@ def _set_issue_type(repo_root: Path, issue_url: str, issue_type_name: str) -> No
 def main():
     with AgentContext(
             usage_logging="summary",
-            inactivity_timeout_seconds=900,
+            timeout=900,
     ) as ctx:
         # this should be altered to run the explore process to clearly define the
         explore_result = require_completion(explore(ctx))

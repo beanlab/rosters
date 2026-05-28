@@ -5,8 +5,8 @@ import subprocess
 from pathlib import Path
 from textwrap import dedent
 
-from myteam.workflow.steps import AgentContext
-from myteam.workflow.models import StepResult
+from myteam.workflow import AgentContext
+from myteam.workflow import StepResult
 
 AGENT = "codex"
 MODEL = "gpt-5.4-mini"
@@ -329,7 +329,7 @@ def main():
     require_concludable_branch()
     with AgentContext(
             usage_logging="summary",
-            inactivity_timeout_seconds=900,
+            timeout=900,
     ) as ctx:
         # review documentation
         review_result = require_completion(review_docs(ctx))
