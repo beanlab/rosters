@@ -1,15 +1,10 @@
-from myteam.workflow.steps import AgentContext
+from myteam.workflow.execution import AgentContext
 
-AGENT = "codex"
-MODEL = "gpt-5.4-mini"
 
 def main():
-    with AgentContext(usage_logging="summary") as ctx:
+    with AgentContext(usage_logging="summary", timeout=900) as ctx:
         result = ctx.run_agent(
-            agent=AGENT,
-            model=MODEL,
             prompt="Say 'Ready'",
-            output={}
         )
         if result.status != "completed" and result.error_type != 'completion_missing':
             raise RuntimeError(result.error_message)
