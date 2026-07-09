@@ -1,15 +1,63 @@
 """
 type: workflow
-description: This workflow implements the requested code. It considers good architecture and code quality.
-usage: no arguments
+description: This workflow implements the requested task.
+usage: Pass a Markdown description of the task and all needed context as single positional arg.
 """
+
 from __future__ import annotations
 
+import logging
 import sys
+from datetime import datetime
+from functools import wraps
+from pathlib import Path
+from pprint import pformat
 from textwrap import dedent
-from typing import TypedDict
+from typing import Any, Callable, TypeVar, TypedDict
 
 from myteam import run_agent
+
+if not hasattr(logging, "get_logger"):
+    logging.get_logger = logging.getLogger  # type: ignore[attr-defined]
+
+LOG_FILE = Path.cwd() / f"{datetime.now().strftime('%Y-%m-%d-%H-%M')}.log"
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s %(lineno)d %(levelname)s %(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%S",
+    handlers=[logging.FileHandler(LOG_FILE, encoding="utf-8")],
+)
+
+logger = logging.get_logger(__name__)
+F = TypeVar("F", bound=Callable[..., Any])
+
+AGENT = 'pi'
+
+
+def log_call(func: F) -> F:
+    @wraps(func)
+    def wrapper(*args: Any, **kwargs: Any):
+        logger.debug(
+            "calling %s args=%s kwargs=%s",
+            func.__name__,
+            pformat(args),
+            pformat(kwargs),
+            stacklevel=2,
+        )
+        try:
+            result = func(*args, **kwargs)
+        except Exception:
+            logger.exception("failed %s", func.__name__, stacklevel=2)
+            raise
+        logger.debug(
+            "finished %s result=%s",
+            func.__name__,
+            pformat(result),
+            stacklevel=2,
+        )
+        return result
+
+    return wrapper  # type: ignore[return-value]
 
 
 class TaskResult(TypedDict):
@@ -53,8 +101,10 @@ PLAN_OUTPUT = {
 
 # NOTE: the task always includes context
 
+@log_call
 def consider_task(task: str) -> bool:
     result = run_agent(
+        agent=AGENT,
         prompt=dedent(f"""
         --- TASK ---
         {task}
@@ -69,18 +119,39 @@ def consider_task(task: str) -> bool:
         YOU SHOULD NOT IMPLEMENT THE TASK. DO NOT MAKE CHANGES.
         
         Decision Guidance:
-        - If the task is to implement a single function or class, then return true
-        - Otherwise return false
+        
+        We are trying to break down the problem into bite-sized pieces that give 
+        the team time to review before more work is done. We are also trying to keep 
+        the implementation focused on the task at hand by limiting scope in the individual steps.
+        
+        Code is written one function at a time in a top-down approach. 
+        `main` is the first function written, but when it is written, dependencies are stubbed out
+        and then implemented in turn.
+        
+        So, if the task is to implement a function or class, return true.
+        
+        Some tasks are not code tasks, such as project setup. Tasks that work best as automic 
+        work, like a git commit involving the staging of separate files, should be treated as a single
+        task. 
+        
+        Again: we're just trying to break things down to a bite-size level,
+        but without creating unnecessary complexity. 
+        
+        Don't reinvent the wheel: if the task can be solved with a few shell commands, let's do it.
+        Don't request that the task be dissected further.
+    
         """),
         output={
             'do_it': '(bool) true if simple enough for direct implementation, false if more complex than that.'
         }
     )
-    return result['output']['do_it']
+    return result.output['do_it']
 
 
+@log_call
 def implement(task: str) -> TaskResult:
     result = run_agent(
+        agent=AGENT,
         prompt=dedent(f"""
         --- TASK ---
         {task}
@@ -167,11 +238,13 @@ def implement(task: str) -> TaskResult:
         """),
         output=TASK_OUTPUT
     )
-    return result['output']
+    return result.output
 
 
+@log_call
 def plan_task(task: str) -> list[str]:
     result = run_agent(
+        agent=AGENT,
         prompt=dedent(f"""
         --- TASK ---
         {task}
@@ -187,11 +260,13 @@ def plan_task(task: str) -> list[str]:
         """),
         output=PLAN_OUTPUT
     )
-    return result['output']['plan']
+    return result.output['plan']
 
 
+@log_call
 def update_plan(task: str, plan: list[str], task_result: TaskResult) -> str:
     result = run_agent(
+        agent=AGENT,
         prompt=dedent(f"""
         --- TASK ---
         {task}
@@ -225,11 +300,13 @@ def update_plan(task: str, plan: list[str], task_result: TaskResult) -> str:
         """),
         output=PLAN_OUTPUT
     )
-    return result['output']['plan']
+    return result.output['plan']
 
 
+@log_call
 def summarize(task: str, task_results: list[TaskResult]) -> TaskResult:
     result = run_agent(
+        agent=AGENT,
         prompt=dedent(f"""
         --- TASK ---
         {task}
@@ -250,10 +327,11 @@ def summarize(task: str, task_results: list[TaskResult]) -> TaskResult:
         """),
         output=TASK_OUTPUT
     )
-    return result['output']
+    return result.output
 
 
-def delegate(task) -> TaskResult:
+@log_call
+def delegate(task: str) -> TaskResult:
     do_it = consider_task(task)
 
     if do_it:
@@ -268,15 +346,17 @@ def delegate(task) -> TaskResult:
             sub_task = plan.pop(0)
             task_result = delegate(sub_task)
             task_results.append(task_result)
+
             plan = update_plan(task, plan, task_result)
 
         return summarize(task, task_results)
 
 
-def main(task):
+@log_call
+def main(task: str) -> None:
     result = delegate(task)
     print(result['summary_of_changes'])
 
 
 if __name__ == "__main__":
-    delegate(sys.stdin.read())
+    main(sys.argv[1])
