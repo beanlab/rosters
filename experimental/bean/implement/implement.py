@@ -72,16 +72,18 @@ TASK_OUTPUT = {
 }
 
 PLAN_INSTRUCTIONS = dedent("""
-    Each step in the plan must contain the specific task to be done AND the context needed
+    Each step in the plan must contain the specific task to be done AND the specific context needed
     for another agent to do the task correctly.
     
     The context should include all information another agent will need to do the task.
     This includes:
+    - Vision of the project
     - The specific task to do
     - Relevant files
-    - Vision of the project
     - Purpose of the change and context of the change within the project
     - Any notes as needed to capture nuance about the task
+    
+    The context should NOT include extra information, including opinions about how to do the work.
     
     Each step should be described in Markdown with this format:
     
@@ -98,6 +100,11 @@ PLAN_OUTPUT = {
     'plan': ['list of Markdown strings, each describing a step in the plan']
 }
 
+
+HUMAN_REVIEW = dedent("""
+    Before you report your result, please present your information to the user for review.
+    **AFTER** the user approves, report using `myteam result`.
+""")
 
 # NOTE: the task always includes context
 
@@ -140,6 +147,7 @@ def consider_task(task: str) -> bool:
         Don't reinvent the wheel: if the task can be solved with a few shell commands, let's do it.
         Don't request that the task be dissected further.
     
+        {HUMAN_REVIEW}
         """),
         output={
             'do_it': '(bool) true if simple enough for direct implementation, false if more complex than that.'
@@ -160,11 +168,30 @@ def implement(task: str) -> TaskResult:
         You are part of a large multi-agent team. Your specific assignment is to
         implement the task described above. **Do only this task and nothing more.**
         
-        You are to use a distinct style:
-        the function should read like pseudo-code, with a clear self-documenting
+        If the task includes a recorded replay baseline, keep that baseline as the
+        source of truth and do not change the expected sequence unless a later
+        replay assertion fails.
+        
+        Keep the implementation simple. Do not add abstraction or complexity until it is needed.
+        
+        **Before you write code**, ask:
+        - is there a built-in way to do the same thing? Use it.
+        - is there a 3rd party dependency we already have that can do this? Use it.
+        - is there a common, dependable 3rd party package that does this well? Get it and use it.
+        - is there already code in the codebase that does this? Use it.
+        - is there already code in the codebase that, with a reasonable refactor, could support this use case also? Refactor and use it.
+        - only if all these other options won't work, write code to solve the problem.
+         
+        **You are to use a distinct style**:
+        The function should read like pseudo-code, with a clear self-documenting
         style. A reader should be able to look at the code, read it out loud,
         and understand the intent and logical flow of the function.
         
+        **You are to follow a distinct process**:
+        Write only one function, class, or UI component layer at a time.
+        Use thorough decomposition, ensuring each implemented portion of code remains
+        self-documenting, simple, and of obvious intent.
+         
         For example, a function that needs to query the user for a list of items and
         then print that list of items might look like:
         
@@ -231,10 +258,17 @@ def implement(task: str) -> TaskResult:
         If the class has dependencies on new outside functions, stub them out as described above.
         Use leading underscore for all class members and methods that are private.
         
+        **Concluding your work**:
         When finished implementing the described task, return a description of what you did,
         including new classes or functions that have been stubbed out.
         
+        Be sure to also include all the new work that now needs to be done in `new_work`.
+        This should be a list of functions/classes/components that your reference in your work,
+        but which haven't been implemented yet.
+        
         These functions and classes will be implemented at a later step.
+        
+        {HUMAN_REVIEW}
         """),
         output=TASK_OUTPUT
     )
@@ -245,18 +279,21 @@ def implement(task: str) -> TaskResult:
 def plan_task(task: str) -> list[str]:
     result = run_agent(
         agent=AGENT,
-        prompt=dedent(f"""
-        --- TASK ---
-        {task}
-        ------------
-        
-        You are part of a multi-agent workflow all working together to accomplish the task. 
-        Your specific assignment is to create a plan for how to implement the task.
-        
-        The plan should focus on the high-level steps needed to complete the task. 
-        Do not break these high-level steps into sub-steps; this will be done later.
-        
-        {PLAN_INSTRUCTIONS}
+        prompt=dedent(
+            f"""
+            --- TASK ---
+            {task}
+            ------------
+            
+            You are part of a multi-agent workflow all working together to accomplish the task. 
+            Your specific assignment is to create a plan for how to implement the task.
+            
+            The plan should focus on the high-level steps needed to complete the task. 
+            Do not break these high-level steps into sub-steps; this will be done later.
+            
+            {PLAN_INSTRUCTIONS}
+            
+            {HUMAN_REVIEW}
         """),
         output=PLAN_OUTPUT
     )
@@ -267,36 +304,40 @@ def plan_task(task: str) -> list[str]:
 def update_plan(task: str, plan: list[str], task_result: TaskResult) -> str:
     result = run_agent(
         agent=AGENT,
-        prompt=dedent(f"""
-        --- TASK ---
-        {task}
-        ------------
-        
-        --- PLAN ---
-        {'\n\n'.join(plan)}
-        ------------
-        
-        --- LATEST CHANGE ---
-        {task_result['summary_of_changes']}
-        
-        New Work:
-        
-        {'\n'.join(task_result['new_work'])}
-        ---------------------
-        
-        You are part of a multi-agent workflow seeking to accomplish the described task,
-        following the described plan.
-        
-        Another agent just did the work described in LATEST CHANGE.
-        
-        Your specific assignment right now is to create an updated plan that accounts for the latest changes.
-        Remove tasks that are now obsolete. Include new tasks that reflect the new work that now needs to be done.
-        
-        If a task does not need to be changed, preserve it as-is. Only add/remove/change tasks
-        that are meaningfully affect by the latest changes.
-        
-        {PLAN_INSTRUCTIONS}
-        
+        prompt=dedent(
+            f"""
+            --- TASK ---
+            {task}
+            ------------
+            
+            --- PLAN ---
+            {'\n\n'.join(plan)}
+            ------------
+            
+            --- LATEST CHANGE ---
+            {task_result['summary_of_changes']}            
+            ---------------------
+            
+            --- NEW WORK ---
+            {'\n'.join(task_result['new_work'])}
+            ---------------------
+            
+            You are part of a multi-agent workflow seeking to accomplish the described task,
+            following the described plan.
+            
+            Another agent just did the work described in LATEST CHANGE.
+            
+            Your specific assignment right now is to create an updated plan that accounts for the latest changes.
+            Remove tasks that are now obsolete. Include new tasks that reflect the new work that now needs to be done.
+            
+            If a task does not need to be changed, preserve it as-is. Only add/remove/change tasks
+            that are meaningfully affect by the latest changes.
+            
+            {PLAN_INSTRUCTIONS}
+            
+            If the plan is empty, and there is no work suggested, return an empty plan.
+            
+            {HUMAN_REVIEW}
         """),
         output=PLAN_OUTPUT
     )
@@ -324,6 +365,8 @@ def summarize(task: str, task_results: list[TaskResult]) -> TaskResult:
         high-level description of how the TASK has been addressed.
         
         Return an empty list for 'new_work'.
+        
+        {HUMAN_REVIEW}
         """),
         output=TASK_OUTPUT
     )
@@ -346,8 +389,8 @@ def delegate(task: str) -> TaskResult:
             sub_task = plan.pop(0)
             task_result = delegate(sub_task)
             task_results.append(task_result)
-
-            plan = update_plan(task, plan, task_result)
+            if plan or task_result['new_work']:
+                plan = update_plan(task, plan, task_result)
 
         return summarize(task, task_results)
 

@@ -1,0 +1,4 @@
+- separate tmp workspaces for agents so their intermediate notes don't pollute the space and contexts of other agents
+- tighter context management? Which files to look at, etc.
+- review step
+- track plans over time and ensure that progress is being made
