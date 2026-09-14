@@ -11,47 +11,51 @@ from typing import Any
 
 from myteam import report_workflow_result, run_agent
 
-
 PROMPT_DIRECTORY = Path(__file__).parent / "code-walk-through"
 
 
-def run_step(prompt_name: str, *, session_id: str | None, interactive: bool) -> Any:
-    prompt_path = PROMPT_DIRECTORY / prompt_name
+def run_step(step_name, prompt_path: Path, output_schema, *, session_id: str | None, interactive: bool) -> Any:
     if not prompt_path.is_file():
         raise FileNotFoundError(f"Missing workflow prompt: {prompt_path}")
 
     result = run_agent(
         prompt=prompt_path.read_text(encoding="utf-8"),
         prompt_source_path=prompt_path,
+        session_name=step_name,
         agent="pi",
         interactive=interactive,
         session_id=session_id,
-        output={
-            "investigation": "Complete investigation in Markdown."
-        }
-        if prompt_name == "01-investigate.md"
-        else {
-            "walkthrough_plan": "Complete walkthrough plan in Markdown."
-        }
-        if prompt_name == "02-plan.md"
-        else {"walkthrough": "Short summary of the completed interactive walkthrough."},
+        output=output_schema,
     )
     if result.output is None:
-        raise RuntimeError(f"Workflow step {prompt_name} ended without a result")
+        raise RuntimeError(f"Workflow step {step_name} ended without a result")
     if result.session_id is None:
-        raise RuntimeError(f"Workflow step {prompt_name} did not return a session ID")
+        raise RuntimeError(f"Workflow step {step_name} did not return a session ID")
     return result
 
 
 def main() -> None:
     investigation = run_step(
-        "01-investigate.md", session_id=None, interactive=True
+        'Investigate',
+        PROMPT_DIRECTORY / "01-investigate.md",
+        {
+            "investigation": "Complete investigation in Markdown."
+        },
+        session_id=None, interactive=True
     )
     planning = run_step(
-        "02-plan.md", session_id=investigation.session_id, interactive=True
+        'Plan',
+        PROMPT_DIRECTORY / "02-plan.md",
+        {
+            "walkthrough_plan": "Complete walkthrough plan in Markdown."
+        },
+        session_id=investigation.session_id, interactive=True
     )
     walkthrough = run_step(
-        "03-walk-through.md", session_id=planning.session_id, interactive=True
+        'Walk Through',
+        PROMPT_DIRECTORY / "03-walk-through.md",
+        {"walkthrough": "Short summary of the completed interactive walkthrough."},
+        session_id=planning.session_id, interactive=True
     )
 
     report_workflow_result(
