@@ -1,0 +1,182 @@
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: #17212b;
+  background: #f5f7fa;
+  font: 16px/1.58 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+main {
+  max-width: 920px;
+  margin: 32px auto;
+  padding: 54px 64px;
+  background: #fff;
+  border: 1px solid #d9e0e7;
+  border-radius: 8px;
+  box-shadow: 0 3px 16px rgba(0, 0, 0, 0.06);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: #002e5d;
+  line-height: 1.22;
+  break-after: avoid-page;
+  page-break-after: avoid;
+}
+
+h1 {
+  margin: 0 0 1.3em;
+  font-size: 2.15rem;
+}
+
+h2 {
+  margin-top: 2.1em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid #d9e0e7;
+}
+
+h3 {
+  margin-top: 1.7em;
+}
+
+p,
+ul,
+ol,
+blockquote,
+pre,
+table {
+  margin: 0.75em 0;
+}
+
+li {
+  margin: 0.26em 0;
+}
+
+a {
+  color: #075fa8;
+  overflow-wrap: anywhere;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+code {
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  background: #eef2f6;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+}
+
+pre {
+  max-width: 100%;
+  padding: 1em;
+  overflow-x: auto;
+  border: 1px solid #d9e0e7;
+  border-radius: 6px;
+  background: #f7f9fb;
+  break-inside: avoid;
+}
+
+pre code {
+  padding: 0;
+  background: transparent;
+}
+
+blockquote {
+  padding: 0.2em 1em;
+  color: #465563;
+  border-left: 4px solid #9bb7cf;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  break-inside: avoid;
+}
+
+th,
+td {
+  padding: 0.45em 0.6em;
+  text-align: left;
+  vertical-align: top;
+  border: 1px solid #cbd5df;
+}
+
+th {
+  color: #002e5d;
+  background: #eef3f7;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+hr {
+  margin: 2em 0;
+  border: 0;
+  border-top: 1px solid #d9e0e7;
+}
+
+@media (max-width: 700px) {
+  main {
+    margin: 0;
+    padding: 30px 22px;
+    border: 0;
+    border-radius: 0;
+  }
+}
+
+@media print {
+  @page {
+    size: letter;
+    margin: 0.65in 0.7in;
+  }
+
+  body {
+    background: #fff;
+    font-size: 10.5pt;
+  }
+
+  main {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  h1 {
+    font-size: 22pt;
+  }
+
+  h2 {
+    font-size: 16pt;
+  }
+
+  h3 {
+    font-size: 13pt;
+  }
+
+  a {
+    color: #075fa8;
+  }
+
+  p,
+  li {
+    orphans: 3;
+    widows: 3;
+  }
+}

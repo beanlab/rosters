@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rosters"
+version = "0.0.0"
+description = "A collection of pre-made agent rosters."
+readme = "README.md"
+requires-python = ">=3.9"
+
+[project.scripts]
+rosters = "rosters.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+rosters = ["**/*"]
+
+[tool.setuptools.exclude-package-data]
+rosters = ["**/__pycache__", "**/__pycache__/*", "**/*.pyc", "**/*.pyo"]
