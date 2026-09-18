@@ -1,0 +1,9 @@
+# A good starting point for your own .myteam.yaml
+# You will need to update the paths to match your cloned location of rosters
+
+defaults:
+  agent: pi
+agents:
+  pi: rosters/agents/pi_caffeinate.py
+jinja_functions:
+  rosters: rosters/agents/roster_path.py::roster_path
