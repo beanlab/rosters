@@ -1,0 +1,1 @@
+Google Workspace skills for one-off Drive, Sheets, Docs, Calendar, and Gmail tasks using local OAuth credentials. List this folder when a task involves Google Workspace, then load `google-workspace.md` first.
