@@ -1,0 +1,1 @@
+- Consistent naming standards (for example, camel case or snake case everywhere).
