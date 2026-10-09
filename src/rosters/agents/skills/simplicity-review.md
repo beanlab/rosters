@@ -2,6 +2,7 @@
 type: workflow
 model: gpt-5.6-terra
 thinking: high
+session_name: Simplicity Review
 description: Run this workflow when requested by the user. This agent will perform a simplicity review of the specified content.
 input: 
   context: (str) description of the project and the task at hand; what is the goal of the current work.
