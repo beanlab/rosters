@@ -17,5 +17,4 @@ def build_argv(
             **kwargs
         )
     ]
-    args.extend(['--provider', 'openai'])
     return args

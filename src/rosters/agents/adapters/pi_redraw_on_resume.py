@@ -16,9 +16,7 @@ def build_argv(**kwargs) -> list[str]:
     extra_args = (
         *(kwargs.get("extra_args") or ()),
         "--extension",
-        str(REDRAW_EXTENSION),
-        "--provider",
-        "openai",
+        str(REDRAW_EXTENSION)
     )
     return [
         "caffeinate",
