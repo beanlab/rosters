@@ -2,8 +2,8 @@
 # You will need to update the paths to match your cloned location of rosters
 
 defaults:
-  agent: pi
+  agent: pi-bean
 agents:
-  pi: rosters/agents/pi_caffeinate.py
+  pi-bean: rosters/agents/adapters/pi_redraw_on_resume.py
 jinja_functions:
   rosters: rosters/agents/roster_path.py::roster_path
