@@ -22,7 +22,6 @@ def run_step(step_name, prompt_path: Path, output_schema, *, session_id: str | N
         prompt=prompt_path.read_text(encoding="utf-8"),
         prompt_source_path=prompt_path,
         session_name=step_name,
-        agent="pi",
         interactive=interactive,
         session_id=session_id,
         output=output_schema,
