@@ -13,13 +13,14 @@ REDRAW_EXTENSION = Path(__file__).parent.parent.joinpath('extensions', "pi_refre
 
 
 def build_argv(**kwargs) -> list[str]:
-    extra_args = (
+    extra_args = [
         *(kwargs.get("extra_args") or ()),
         "--extension",
         str(REDRAW_EXTENSION),
-        "--provider",
-        "openai",
-    )
+    ]
+    if (model := kwargs.get('model')) and '/' not in model:
+        extra_args.extend(('--provider', 'openai'))
+
     return [
         "caffeinate",
         *builtin.build_argv(**{**kwargs, "extra_args": extra_args}),

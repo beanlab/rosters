@@ -1,6 +1,6 @@
 ---
 type: workflow
-model: gpt-5.6-terra
+model: gpt-6.1-sol
 thinking: high
 session_name: Simplicity Review
 description: Run this workflow when requested by the user. This agent will perform a simplicity review of the specified content.
