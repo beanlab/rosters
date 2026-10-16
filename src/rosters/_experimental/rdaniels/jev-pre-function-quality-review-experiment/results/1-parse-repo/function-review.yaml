@@ -1,0 +1,2509 @@
+schema_version: '1.0'
+source:
+  input_file: /mnt/c/Users/rebek/School/F26/CS401R_F26/experiments/jev-pre-function-quality-review-experiment/results/1-parse-repo/parsed.json
+  input_schema_version: '1.0'
+  checks_file: /mnt/c/Users/rebek/School/F26/CS401R_F26/experiments/jev-pre-function-quality-review-experiment/2-set-up-and-call-jev/code-checks.yaml
+run:
+  requested_model: jev-latest
+  resolved_models:
+  - jev-1.13.0
+  started_at: '2026-10-13T19:11:42.143529+00:00'
+  completed_at: '2026-10-13T19:11:44.960614+00:00'
+  duration_seconds: 2.817069
+cost:
+  currency: USD
+  estimate:
+    method: UTF-8 bytes / 4 plus fixed per-request overhead
+    request_count: 22
+    question_count_per_request: 16
+    fixed_tokens_per_request: 200
+    estimated_input_tokens: 89084
+    price_per_million_input_tokens_usd: 0.042
+    estimated_cost_usd: 0.003741528
+  actual_input_tokens: 88011
+  actual_output_tokens: 7018
+  actual_cost_usd: 0.0036964620000000006
+  note: Cost uses input tokens only and the configured price assumption.
+checks:
+  schema_version: '1.0'
+  groups:
+  - id: readability_and_naming
+    name: Readability and naming
+    questions:
+    - id: easy_to_follow
+      polarity: positive
+      instructions: Can the target function's behavior be followed on a first read?
+      criteria:
+        'true': The control flow and operations are straightforward to follow from the supplied code.
+        'false': The code is difficult to follow without substantial rereading or reconstruction.
+    - id: purpose_is_apparent
+      polarity: positive
+      instructions: Is the target function's purpose apparent from its name, signature, and implementation?
+      criteria:
+        'true': The name, signature, and implementation communicate a coherent purpose.
+        'false': The function's purpose is unclear or conflicts with its name or signature.
+    - id: names_are_descriptive
+      polarity: positive
+      instructions: Do names in the target function clearly communicate what their values or operations
+        represent?
+      criteria:
+        'true': Names are descriptive enough to understand their roles from the supplied code.
+        'false': Important names are vague, misleading, or require guesswork.
+    - id: inconsistent_naming
+      polarity: negative
+      instructions: Does the target function use naming or code conventions that are noticeably inconsistent
+        with the supplied file context?
+      criteria:
+        'true': The target visibly departs from conventions used by related functions without an apparent
+          reason.
+        'false': The target is consistent with the visible conventions, or the supplied context shows
+          no inconsistency.
+  - id: function_and_class_size
+    name: Function and class size
+    questions:
+    - id: unusually_long_or_many_steps
+      polarity: negative
+      instructions: Is the target function unusually long or visibly responsible for many distinct steps?
+      criteria:
+        'true': The function is long or combines several distinct responsibilities that could be separated.
+        'false': The function is focused and its length is proportionate to one coherent responsibility.
+    - id: owning_class_is_large
+      polarity: negative
+      instructions: Does the target function belong to a class that visibly has many methods, fields,
+        or responsibilities in the supplied class context?
+      criteria:
+        'true': The owning class appears large or overloaded with responsibilities.
+        'false': The owning class appears reasonably focused, or the target is not a class method.
+    - id: long_parameter_list
+      polarity: negative
+      instructions: Does the target function take too many separate arguments for its apparent responsibility?
+      criteria:
+        'true': The parameter list is visibly burdensome or suggests missing grouping or abstraction.
+        'false': The number of parameters is modest and appropriate for the function's purpose.
+  - id: control_flow_and_complexity
+    name: Control flow and complexity
+    questions:
+    - id: excessive_nesting
+      polarity: negative
+      instructions: Does the target function contain conditionals or loops nested several levels deep?
+      criteria:
+        'true': Nested control flow makes the function visibly difficult to follow.
+        'false': Control flow is flat or shallow enough to follow readily.
+    - id: complex_conditionals
+      polarity: negative
+      instructions: Does the target function contain a condition combining many clauses or multiple levels
+        of and/or logic?
+      criteria:
+        'true': At least one condition is visibly complex and hard to understand as a single expression.
+        'false': Conditions are simple, named, or decomposed clearly.
+    - id: flag_argument
+      polarity: negative
+      instructions: Does a boolean-like argument make the target function take substantially different
+        behavioral paths?
+      criteria:
+        'true': A flag parameter selects meaningfully different behaviors within the function.
+        'false': No flag argument controls substantially different behavior.
+    - id: message_chain
+      polarity: negative
+      instructions: Does the target function navigate through a noticeably long chain of attributes or
+        method results?
+      criteria:
+        'true': The code contains a long chain such as a.b.c.d that increases coupling or obscures intent.
+        'false': Attribute and method access chains are short and direct.
+  - id: duplication_and_unexplained_values
+    name: Duplication and unexplained values
+    questions:
+    - id: duplicated_code
+      polarity: negative
+      instructions: Is code in the target function repeated or very similar to code in the supplied file
+        context?
+      criteria:
+        'true': A meaningful block or sequence is visibly duplicated in the target or related functions.
+        'false': No meaningful duplication is visible in the supplied context.
+    - id: magic_values
+      polarity: negative
+      instructions: Does the target function use unexplained literal numbers or strings in its logic?
+      criteria:
+        'true': A literal carries non-obvious domain meaning and is not named or explained by its immediate
+          use.
+        'false': Literals are self-explanatory, structural, or represented by named values.
+    - id: repeated_conditionals
+      polarity: negative
+      instructions: Does the target function repeat a conditional pattern or switch-like branch that also
+        appears in the supplied file context?
+      criteria:
+        'true': Similar conditional branching is visibly repeated and may benefit from consolidation.
+        'false': No repeated conditional pattern is visible in the supplied context.
+  - id: inputs_errors_and_reporting
+    name: Inputs, errors, and reporting
+    questions:
+    - id: appropriate_error_handling
+      polarity: positive
+      instructions: Does the target function handle and report reasonably foreseeable failures appropriately
+        for its apparent role?
+      criteria:
+        'true': Recoverable failures are handled or propagated clearly, or the function has no visible
+          need for local error handling.
+        'false': A foreseeable failure is visibly swallowed, obscured, or left without appropriate handling
+          or propagation.
+    - id: broad_or_silent_exception_handling
+      polarity: negative
+      instructions: Does the target function catch overly broad exceptions or silently ignore errors?
+      criteria:
+        'true': The function catches errors too broadly, discards them, or suppresses useful failure information.
+        'false': Exception handling is specific and informative, or the function does not catch exceptions.
+functions:
+- id: function_index.py::FunctionCollector.__init__@36
+  file: function_index.py
+  name: __init__
+  qualified_name: FunctionCollector.__init__
+  line: 36
+  end_line: 42
+  model: jev-1.13.0
+  usage:
+    input_tokens: 4270
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.97
+      probability_no: 0.030000000000000027
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.94
+      probability_no: 0.06000000000000005
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.85
+      probability_no: 0.15000000000000002
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.1
+      probability_no: 0.9
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.06
+      probability_no: 0.94
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.36
+      probability_no: 0.64
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.1
+      probability_no: 0.9
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.24
+      probability_no: 0.76
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.08
+      probability_no: 0.92
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.07
+      probability_no: 0.9299999999999999
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.8
+      probability_no: 0.19999999999999996
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+- id: function_index.py::FunctionCollector.visit_ClassDef@44
+  file: function_index.py
+  name: visit_ClassDef
+  qualified_name: FunctionCollector.visit_ClassDef
+  line: 44
+  end_line: 49
+  model: jev-1.13.0
+  usage:
+    input_tokens: 4274
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.92
+      probability_no: 0.07999999999999996
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.91
+      probability_no: 0.08999999999999997
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.78
+      probability_no: 0.21999999999999997
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.13
+      probability_no: 0.87
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.07
+      probability_no: 0.9299999999999999
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.39
+      probability_no: 0.61
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.06
+      probability_no: 0.94
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.78
+      probability_no: 0.21999999999999997
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.11
+      probability_no: 0.89
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.08
+      probability_no: 0.92
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.85
+      probability_no: 0.15000000000000002
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+- id: function_index.py::FunctionCollector.visit_FunctionDef@51
+  file: function_index.py
+  name: visit_FunctionDef
+  qualified_name: FunctionCollector.visit_FunctionDef
+  line: 51
+  end_line: 52
+  model: jev-1.13.0
+  usage:
+    input_tokens: 4292
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.94
+      probability_no: 0.06000000000000005
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.94
+      probability_no: 0.06000000000000005
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.91
+      probability_no: 0.08999999999999997
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.06
+      probability_no: 0.94
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.29
+      probability_no: 0.71
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.68
+      probability_no: 0.31999999999999995
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.06
+      probability_no: 0.94
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.09
+      probability_no: 0.91
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.82
+      probability_no: 0.18000000000000005
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+- id: function_index.py::FunctionCollector.visit_AsyncFunctionDef@54
+  file: function_index.py
+  name: visit_AsyncFunctionDef
+  qualified_name: FunctionCollector.visit_AsyncFunctionDef
+  line: 54
+  end_line: 55
+  model: jev-1.13.0
+  usage:
+    input_tokens: 4296
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.96
+      probability_no: 0.040000000000000036
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.95
+      probability_no: 0.050000000000000044
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.91
+      probability_no: 0.08999999999999997
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.06
+      probability_no: 0.94
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.3
+      probability_no: 0.7
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.74
+      probability_no: 0.26
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.1
+      probability_no: 0.9
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.84
+      probability_no: 0.16000000000000003
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+- id: function_index.py::FunctionCollector._visit_function@57
+  file: function_index.py
+  name: _visit_function
+  qualified_name: FunctionCollector._visit_function
+  line: 57
+  end_line: 79
+  model: jev-1.13.0
+  usage:
+    input_tokens: 4269
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.87
+      probability_no: 0.13
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.95
+      probability_no: 0.050000000000000044
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.85
+      probability_no: 0.15000000000000002
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.13
+      probability_no: 0.87
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.29
+      probability_no: 0.71
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.25
+      probability_no: 0.75
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.11
+      probability_no: 0.89
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.1
+      probability_no: 0.9
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.59
+      probability_no: 0.41000000000000003
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.14
+      probability_no: 0.86
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.13
+      probability_no: 0.87
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.75
+      probability_no: 0.25
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+- id: function_index.py::CallCollector.__init__@83
+  file: function_index.py
+  name: __init__
+  qualified_name: CallCollector.__init__
+  line: 83
+  end_line: 84
+  model: jev-1.13.0
+  usage:
+    input_tokens: 4268
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.97
+      probability_no: 0.030000000000000027
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.94
+      probability_no: 0.06000000000000005
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.92
+      probability_no: 0.07999999999999996
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.09
+      probability_no: 0.91
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.22
+      probability_no: 0.78
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.38
+      probability_no: 0.62
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.06
+      probability_no: 0.94
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.06
+      probability_no: 0.94
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.89
+      probability_no: 0.10999999999999999
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+- id: function_index.py::CallCollector.visit_Call@86
+  file: function_index.py
+  name: visit_Call
+  qualified_name: CallCollector.visit_Call
+  line: 86
+  end_line: 88
+  model: jev-1.13.0
+  usage:
+    input_tokens: 4266
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.96
+      probability_no: 0.040000000000000036
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.94
+      probability_no: 0.06000000000000005
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.91
+      probability_no: 0.08999999999999997
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.1
+      probability_no: 0.9
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.21
+      probability_no: 0.79
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.28
+      probability_no: 0.72
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.07
+      probability_no: 0.9299999999999999
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.85
+      probability_no: 0.15000000000000002
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+- id: function_index.py::CallCollector.visit_FunctionDef@90
+  file: function_index.py
+  name: visit_FunctionDef
+  qualified_name: CallCollector.visit_FunctionDef
+  line: 90
+  end_line: 91
+  model: jev-1.13.0
+  usage:
+    input_tokens: 4272
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.97
+      probability_no: 0.030000000000000027
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.41
+      probability_no: 0.5900000000000001
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.87
+      probability_no: 0.13
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.29
+      probability_no: 0.71
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.02
+      probability_no: 0.98
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.15
+      probability_no: 0.85
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.6
+      probability_no: 0.4
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.07
+      probability_no: 0.9299999999999999
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.81
+      probability_no: 0.18999999999999995
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.06
+      probability_no: 0.94
+- id: function_index.py::CallCollector.visit_AsyncFunctionDef@93
+  file: function_index.py
+  name: visit_AsyncFunctionDef
+  qualified_name: CallCollector.visit_AsyncFunctionDef
+  line: 93
+  end_line: 94
+  model: jev-1.13.0
+  usage:
+    input_tokens: 4276
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.97
+      probability_no: 0.030000000000000027
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.51
+      probability_no: 0.49
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.89
+      probability_no: 0.10999999999999999
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.44
+      probability_no: 0.56
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.02
+      probability_no: 0.98
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.16
+      probability_no: 0.84
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.66
+      probability_no: 0.33999999999999997
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.07
+      probability_no: 0.9299999999999999
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.82
+      probability_no: 0.18000000000000005
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+- id: function_index.py::CallCollector.visit_ClassDef@96
+  file: function_index.py
+  name: visit_ClassDef
+  qualified_name: CallCollector.visit_ClassDef
+  line: 96
+  end_line: 97
+  model: jev-1.13.0
+  usage:
+    input_tokens: 4272
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.97
+      probability_no: 0.030000000000000027
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.51
+      probability_no: 0.49
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.88
+      probability_no: 0.12
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.29
+      probability_no: 0.71
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.02
+      probability_no: 0.98
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.14
+      probability_no: 0.86
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.61
+      probability_no: 0.39
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.08
+      probability_no: 0.92
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.85
+      probability_no: 0.15000000000000002
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.06
+      probability_no: 0.94
+- id: function_index.py::CallCollector.visit_Lambda@99
+  file: function_index.py
+  name: visit_Lambda
+  qualified_name: CallCollector.visit_Lambda
+  line: 99
+  end_line: 100
+  model: jev-1.13.0
+  usage:
+    input_tokens: 4271
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.97
+      probability_no: 0.030000000000000027
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.73
+      probability_no: 0.27
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.88
+      probability_no: 0.12
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.11
+      probability_no: 0.89
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.02
+      probability_no: 0.98
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.16
+      probability_no: 0.84
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.66
+      probability_no: 0.33999999999999997
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.07
+      probability_no: 0.9299999999999999
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.84
+      probability_no: 0.16000000000000003
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+- id: function_index.py::iter_python_files@103
+  file: function_index.py
+  name: iter_python_files
+  qualified_name: iter_python_files
+  line: 103
+  end_line: 106
+  model: jev-1.13.0
+  usage:
+    input_tokens: 4266
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.88
+      probability_no: 0.12
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.97
+      probability_no: 0.030000000000000027
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.87
+      probability_no: 0.13
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.11
+      probability_no: 0.89
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.06
+      probability_no: 0.94
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.22
+      probability_no: 0.78
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.57
+      probability_no: 0.43000000000000005
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.15
+      probability_no: 0.85
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.15
+      probability_no: 0.85
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.22
+      probability_no: 0.78
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.26
+      probability_no: 0.74
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.77
+      probability_no: 0.22999999999999998
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+- id: function_index.py::collect_calls@109
+  file: function_index.py
+  name: collect_calls
+  qualified_name: collect_calls
+  line: 109
+  end_line: 113
+  model: jev-1.13.0
+  usage:
+    input_tokens: 4264
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.94
+      probability_no: 0.06000000000000005
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.95
+      probability_no: 0.050000000000000044
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.9
+      probability_no: 0.09999999999999998
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.11
+      probability_no: 0.89
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.06
+      probability_no: 0.94
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.09
+      probability_no: 0.91
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.06
+      probability_no: 0.94
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.3
+      probability_no: 0.7
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.08
+      probability_no: 0.92
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.77
+      probability_no: 0.22999999999999998
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+- id: function_index.py::unique_symbol@116
+  file: function_index.py
+  name: unique_symbol
+  qualified_name: unique_symbol
+  line: 116
+  end_line: 118
+  model: jev-1.13.0
+  usage:
+    input_tokens: 4264
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.96
+      probability_no: 0.040000000000000036
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.95
+      probability_no: 0.050000000000000044
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.88
+      probability_no: 0.12
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.11
+      probability_no: 0.89
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.09
+      probability_no: 0.91
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.1
+      probability_no: 0.9
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.2
+      probability_no: 0.8
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.14
+      probability_no: 0.86
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.3
+      probability_no: 0.7
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.79
+      probability_no: 0.20999999999999996
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+- id: function_index.py::resolve_call@121
+  file: function_index.py
+  name: resolve_call
+  qualified_name: resolve_call
+  line: 121
+  end_line: 145
+  model: jev-1.13.0
+  usage:
+    input_tokens: 4276
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.84
+      probability_no: 0.16000000000000003
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.94
+      probability_no: 0.06000000000000005
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.88
+      probability_no: 0.12
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.1
+      probability_no: 0.9
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.13
+      probability_no: 0.87
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.16
+      probability_no: 0.84
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.22
+      probability_no: 0.78
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.88
+      probability_no: 0.12
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.08
+      probability_no: 0.92
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.08
+      probability_no: 0.92
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.27
+      probability_no: 0.73
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.2
+      probability_no: 0.8
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.34
+      probability_no: 0.6599999999999999
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.77
+      probability_no: 0.22999999999999998
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+- id: function_index.py::bottom_depths@148
+  file: function_index.py
+  name: bottom_depths
+  qualified_name: bottom_depths
+  line: 148
+  end_line: 159
+  model: jev-1.13.0
+  usage:
+    input_tokens: 4266
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.79
+      probability_no: 0.20999999999999996
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.93
+      probability_no: 0.06999999999999995
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.86
+      probability_no: 0.14
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.14
+      probability_no: 0.86
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.15
+      probability_no: 0.85
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.16
+      probability_no: 0.84
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.1
+      probability_no: 0.9
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.07
+      probability_no: 0.9299999999999999
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.15
+      probability_no: 0.85
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.09
+      probability_no: 0.91
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.22
+      probability_no: 0.78
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.38
+      probability_no: 0.62
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.73
+      probability_no: 0.27
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+- id: function_index.py::analyze@162
+  file: function_index.py
+  name: analyze
+  qualified_name: analyze
+  line: 162
+  end_line: 240
+  model: jev-1.13.0
+  usage:
+    input_tokens: 4319
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.75
+      probability_no: 0.25
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.92
+      probability_no: 0.07999999999999996
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.9
+      probability_no: 0.09999999999999998
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.11
+      probability_no: 0.89
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.88
+      probability_no: 0.12
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.55
+      probability_no: 0.44999999999999996
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.53
+      probability_no: 0.47
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.06
+      probability_no: 0.94
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.19
+      probability_no: 0.81
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.21
+      probability_no: 0.79
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.25
+      probability_no: 0.75
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.51
+      probability_no: 0.49
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.8
+      probability_no: 0.19999999999999996
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.28
+      probability_no: 0.72
+- id: function_index.py::parse_args@243
+  file: function_index.py
+  name: parse_args
+  qualified_name: parse_args
+  line: 243
+  end_line: 247
+  model: jev-1.13.0
+  usage:
+    input_tokens: 4264
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.97
+      probability_no: 0.030000000000000027
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.97
+      probability_no: 0.030000000000000027
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.93
+      probability_no: 0.06999999999999995
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.1
+      probability_no: 0.9
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.11
+      probability_no: 0.89
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.07
+      probability_no: 0.9299999999999999
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.1
+      probability_no: 0.9
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.06
+      probability_no: 0.94
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.79
+      probability_no: 0.20999999999999996
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+- id: function_index.py::main@250
+  file: function_index.py
+  name: main
+  qualified_name: main
+  line: 250
+  end_line: 257
+  model: jev-1.13.0
+  usage:
+    input_tokens: 4288
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.94
+      probability_no: 0.06000000000000005
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.93
+      probability_no: 0.06999999999999995
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.86
+      probability_no: 0.14
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.1
+      probability_no: 0.9
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.14
+      probability_no: 0.86
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.07
+      probability_no: 0.9299999999999999
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.07
+      probability_no: 0.9299999999999999
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.36
+      probability_no: 0.64
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.09
+      probability_no: 0.91
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.1
+      probability_no: 0.9
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.21
+      probability_no: 0.79
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.28
+      probability_no: 0.72
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.79
+      probability_no: 0.20999999999999996
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.1
+      probability_no: 0.9
+- id: tests/test_function_index.py::AnalyzeTests.test_indexes_functions_and_calculates_depths@9
+  file: tests/test_function_index.py
+  name: test_indexes_functions_and_calculates_depths
+  qualified_name: AnalyzeTests.test_indexes_functions_and_calculates_depths
+  line: 9
+  end_line: 37
+  model: jev-1.13.0
+  usage:
+    input_tokens: 2258
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.9
+      probability_no: 0.09999999999999998
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.95
+      probability_no: 0.050000000000000044
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.89
+      probability_no: 0.10999999999999999
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.08
+      probability_no: 0.92
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.28
+      probability_no: 0.72
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.19
+      probability_no: 0.81
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.07
+      probability_no: 0.9299999999999999
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.74
+      probability_no: 0.26
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.2
+      probability_no: 0.8
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.08
+      probability_no: 0.92
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.81
+      probability_no: 0.18999999999999995
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+- id: tests/test_function_index.py::AnalyzeTests.test_resolves_methods_and_collapses_recursive_cycles@39
+  file: tests/test_function_index.py
+  name: test_resolves_methods_and_collapses_recursive_cycles
+  qualified_name: AnalyzeTests.test_resolves_methods_and_collapses_recursive_cycles
+  line: 39
+  end_line: 59
+  model: jev-1.13.0
+  usage:
+    input_tokens: 2263
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.89
+      probability_no: 0.10999999999999999
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.94
+      probability_no: 0.06000000000000005
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.86
+      probability_no: 0.14
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.09
+      probability_no: 0.91
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.15
+      probability_no: 0.85
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.16
+      probability_no: 0.84
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.03
+      probability_no: 0.97
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.06
+      probability_no: 0.94
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.76
+      probability_no: 0.24
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.21
+      probability_no: 0.79
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.08
+      probability_no: 0.92
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.83
+      probability_no: 0.17000000000000004
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+- id: tests/test_function_index.py::AnalyzeTests.test_resolves_a_nested_function_call@61
+  file: tests/test_function_index.py
+  name: test_resolves_a_nested_function_call
+  qualified_name: AnalyzeTests.test_resolves_a_nested_function_call
+  line: 61
+  end_line: 78
+  model: jev-1.13.0
+  usage:
+    input_tokens: 2257
+    output_tokens: 319
+  responses:
+    easy_to_follow:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.9
+      probability_no: 0.09999999999999998
+    purpose_is_apparent:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.94
+      probability_no: 0.06000000000000005
+    names_are_descriptive:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.89
+      probability_no: 0.10999999999999999
+    inconsistent_naming:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.1
+      probability_no: 0.9
+    unusually_long_or_many_steps:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.13
+      probability_no: 0.87
+    owning_class_is_large:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.16
+      probability_no: 0.84
+    long_parameter_list:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    excessive_nesting:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96
+    complex_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    flag_argument:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    message_chain:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.05
+      probability_no: 0.95
+    duplicated_code:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.82
+      probability_no: 0.18000000000000005
+    magic_values:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.21
+      probability_no: 0.79
+    repeated_conditionals:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.07
+      probability_no: 0.9299999999999999
+    appropriate_error_handling:
+      type: noul
+      polarity: positive
+      yes_means: good
+      probability_yes: 0.8
+      probability_no: 0.19999999999999996
+    broad_or_silent_exception_handling:
+      type: noul
+      polarity: negative
+      yes_means: bad
+      probability_yes: 0.04
+      probability_no: 0.96

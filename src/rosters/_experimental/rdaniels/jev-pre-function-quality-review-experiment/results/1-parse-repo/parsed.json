@@ -1,0 +1,310 @@
+{
+  "schema_version": "1.0",
+  "root": "/mnt/c/Users/rebek/School/F26/CS401R_F26/experiments/jev-pre-function-quality-review-experiment/1-parse-repo",
+  "entry_points": [
+    "function_index.py::main@250"
+  ],
+  "functions": [
+    {
+      "id": "function_index.py::FunctionCollector.__init__@36",
+      "file": "function_index.py",
+      "name": "__init__",
+      "qualified_name": "FunctionCollector.__init__",
+      "line": 36,
+      "end_line": 42,
+      "signature": "__init__(self, file: str, source: str)",
+      "source": "def __init__(self, file: str, source: str) -> None:\n        self.file = file\n        self.source = source\n        self.functions: list[FunctionInfo] = []\n        self._names: list[str] = []\n        self._classes: list[str] = []\n        self._functions: list[str] = []",
+      "calls": [],
+      "depth_from_entry": null,
+      "depth_to_leaf": 0
+    },
+    {
+      "id": "function_index.py::FunctionCollector.visit_ClassDef@44",
+      "file": "function_index.py",
+      "name": "visit_ClassDef",
+      "qualified_name": "FunctionCollector.visit_ClassDef",
+      "line": 44,
+      "end_line": 49,
+      "signature": "visit_ClassDef(self, node: ast.ClassDef)",
+      "source": "def visit_ClassDef(self, node: ast.ClassDef) -> None:\n        self._names.append(node.name)\n        self._classes.append(\".\".join(self._names))\n        self.generic_visit(node)\n        self._classes.pop()\n        self._names.pop()",
+      "calls": [],
+      "depth_from_entry": null,
+      "depth_to_leaf": 0
+    },
+    {
+      "id": "function_index.py::FunctionCollector.visit_FunctionDef@51",
+      "file": "function_index.py",
+      "name": "visit_FunctionDef",
+      "qualified_name": "FunctionCollector.visit_FunctionDef",
+      "line": 51,
+      "end_line": 52,
+      "signature": "visit_FunctionDef(self, node: ast.FunctionDef)",
+      "source": "def visit_FunctionDef(self, node: ast.FunctionDef) -> None:\n        self._visit_function(node)",
+      "calls": [
+        "function_index.py::FunctionCollector._visit_function@57"
+      ],
+      "depth_from_entry": null,
+      "depth_to_leaf": 1
+    },
+    {
+      "id": "function_index.py::FunctionCollector.visit_AsyncFunctionDef@54",
+      "file": "function_index.py",
+      "name": "visit_AsyncFunctionDef",
+      "qualified_name": "FunctionCollector.visit_AsyncFunctionDef",
+      "line": 54,
+      "end_line": 55,
+      "signature": "visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef)",
+      "source": "def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:\n        self._visit_function(node)",
+      "calls": [
+        "function_index.py::FunctionCollector._visit_function@57"
+      ],
+      "depth_from_entry": null,
+      "depth_to_leaf": 1
+    },
+    {
+      "id": "function_index.py::FunctionCollector._visit_function@57",
+      "file": "function_index.py",
+      "name": "_visit_function",
+      "qualified_name": "FunctionCollector._visit_function",
+      "line": 57,
+      "end_line": 79,
+      "signature": "_visit_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef)",
+      "source": "def _visit_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:\n        self._names.append(node.name)\n        qualified_name = \".\".join(self._names)\n        function_id = f\"{self.file}::{qualified_name}@{node.lineno}\"\n        self.functions.append(\n            FunctionInfo(\n                id=function_id,\n                file=self.file,\n                name=node.name,\n                qualified_name=qualified_name,\n                line=node.lineno,\n                end_line=node.end_lineno or node.lineno,\n                signature=f\"{node.name}({ast.unparse(node.args)})\",\n                source=ast.get_source_segment(self.source, node) or \"\",\n                owner_class=self._classes[-1] if self._classes else None,\n                enclosing_functions=tuple(self._functions),\n                node=node,\n            )\n        )\n        self._functions.append(qualified_name)\n        self.generic_visit(node)\n        self._functions.pop()\n        self._names.pop()",
+      "calls": [],
+      "depth_from_entry": null,
+      "depth_to_leaf": 0
+    },
+    {
+      "id": "function_index.py::CallCollector.__init__@83",
+      "file": "function_index.py",
+      "name": "__init__",
+      "qualified_name": "CallCollector.__init__",
+      "line": 83,
+      "end_line": 84,
+      "signature": "__init__(self)",
+      "source": "def __init__(self) -> None:\n        self.calls: list[ast.Call] = []",
+      "calls": [],
+      "depth_from_entry": null,
+      "depth_to_leaf": 0
+    },
+    {
+      "id": "function_index.py::CallCollector.visit_Call@86",
+      "file": "function_index.py",
+      "name": "visit_Call",
+      "qualified_name": "CallCollector.visit_Call",
+      "line": 86,
+      "end_line": 88,
+      "signature": "visit_Call(self, node: ast.Call)",
+      "source": "def visit_Call(self, node: ast.Call) -> None:\n        self.calls.append(node)\n        self.generic_visit(node)",
+      "calls": [],
+      "depth_from_entry": null,
+      "depth_to_leaf": 0
+    },
+    {
+      "id": "function_index.py::CallCollector.visit_FunctionDef@90",
+      "file": "function_index.py",
+      "name": "visit_FunctionDef",
+      "qualified_name": "CallCollector.visit_FunctionDef",
+      "line": 90,
+      "end_line": 91,
+      "signature": "visit_FunctionDef(self, node: ast.FunctionDef)",
+      "source": "def visit_FunctionDef(self, node: ast.FunctionDef) -> None:\n        return",
+      "calls": [],
+      "depth_from_entry": null,
+      "depth_to_leaf": 0
+    },
+    {
+      "id": "function_index.py::CallCollector.visit_AsyncFunctionDef@93",
+      "file": "function_index.py",
+      "name": "visit_AsyncFunctionDef",
+      "qualified_name": "CallCollector.visit_AsyncFunctionDef",
+      "line": 93,
+      "end_line": 94,
+      "signature": "visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef)",
+      "source": "def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:\n        return",
+      "calls": [],
+      "depth_from_entry": null,
+      "depth_to_leaf": 0
+    },
+    {
+      "id": "function_index.py::CallCollector.visit_ClassDef@96",
+      "file": "function_index.py",
+      "name": "visit_ClassDef",
+      "qualified_name": "CallCollector.visit_ClassDef",
+      "line": 96,
+      "end_line": 97,
+      "signature": "visit_ClassDef(self, node: ast.ClassDef)",
+      "source": "def visit_ClassDef(self, node: ast.ClassDef) -> None:\n        return",
+      "calls": [],
+      "depth_from_entry": null,
+      "depth_to_leaf": 0
+    },
+    {
+      "id": "function_index.py::CallCollector.visit_Lambda@99",
+      "file": "function_index.py",
+      "name": "visit_Lambda",
+      "qualified_name": "CallCollector.visit_Lambda",
+      "line": 99,
+      "end_line": 100,
+      "signature": "visit_Lambda(self, node: ast.Lambda)",
+      "source": "def visit_Lambda(self, node: ast.Lambda) -> None:\n        return",
+      "calls": [],
+      "depth_from_entry": null,
+      "depth_to_leaf": 0
+    },
+    {
+      "id": "function_index.py::iter_python_files@103",
+      "file": "function_index.py",
+      "name": "iter_python_files",
+      "qualified_name": "iter_python_files",
+      "line": 103,
+      "end_line": 106,
+      "signature": "iter_python_files(root: Path)",
+      "source": "def iter_python_files(root: Path) -> Iterable[Path]:\n    for path in sorted(root.rglob(\"*.py\")):\n        if not any(part in EXCLUDED_DIRECTORIES or part.startswith(\".\") for part in path.relative_to(root).parts):\n            yield path",
+      "calls": [],
+      "depth_from_entry": 2,
+      "depth_to_leaf": 0
+    },
+    {
+      "id": "function_index.py::collect_calls@109",
+      "file": "function_index.py",
+      "name": "collect_calls",
+      "qualified_name": "collect_calls",
+      "line": 109,
+      "end_line": 113,
+      "signature": "collect_calls(nodes: Iterable[ast.stmt])",
+      "source": "def collect_calls(nodes: Iterable[ast.stmt]) -> list[ast.Call]:\n    collector = CallCollector()\n    for node in nodes:\n        collector.visit(node)\n    return collector.calls",
+      "calls": [],
+      "depth_from_entry": 2,
+      "depth_to_leaf": 0
+    },
+    {
+      "id": "function_index.py::unique_symbol@116",
+      "file": "function_index.py",
+      "name": "unique_symbol",
+      "qualified_name": "unique_symbol",
+      "line": 116,
+      "end_line": 118,
+      "signature": "unique_symbol(symbols: dict[str, list[FunctionInfo]], name: str)",
+      "source": "def unique_symbol(symbols: dict[str, list[FunctionInfo]], name: str) -> FunctionInfo | None:\n    matches = symbols.get(name, [])\n    return matches[0] if len(matches) == 1 else None",
+      "calls": [],
+      "depth_from_entry": 3,
+      "depth_to_leaf": 0
+    },
+    {
+      "id": "function_index.py::resolve_call@121",
+      "file": "function_index.py",
+      "name": "resolve_call",
+      "qualified_name": "resolve_call",
+      "line": 121,
+      "end_line": 145,
+      "signature": "resolve_call(call: ast.Call, caller: FunctionInfo | None, symbols: dict[str, list[FunctionInfo]])",
+      "source": "def resolve_call(\n    call: ast.Call,\n    caller: FunctionInfo | None,\n    symbols: dict[str, list[FunctionInfo]],\n) -> FunctionInfo | None:\n    target = call.func\n    if isinstance(target, ast.Name):\n        if caller is not None:\n            scopes = (*caller.enclosing_functions, caller.qualified_name)\n            for enclosing in reversed(scopes):\n                match = unique_symbol(symbols, f\"{enclosing}.{target.id}\")\n                if match is not None:\n                    return match\n        return unique_symbol(symbols, target.id)\n\n    if (\n        caller is not None\n        and caller.owner_class is not None\n        and isinstance(target, ast.Attribute)\n        and isinstance(target.value, ast.Name)\n        and target.value.id in {\"self\", \"cls\"}\n    ):\n        return unique_symbol(symbols, f\"{caller.owner_class}.{target.attr}\")\n\n    return None",
+      "calls": [
+        "function_index.py::unique_symbol@116"
+      ],
+      "depth_from_entry": 2,
+      "depth_to_leaf": 1
+    },
+    {
+      "id": "function_index.py::bottom_depths@148",
+      "file": "function_index.py",
+      "name": "bottom_depths",
+      "qualified_name": "bottom_depths",
+      "line": 148,
+      "end_line": 159,
+      "signature": "bottom_depths(graph: nx.DiGraph)",
+      "source": "def bottom_depths(graph: nx.DiGraph) -> dict[str, int]:\n    if not graph:\n        return {}\n    condensed = nx.condensation(graph)\n    component_depth: dict[int, int] = {}\n    for component in reversed(list(nx.topological_sort(condensed))):\n        children = list(condensed.successors(component))\n        component_depth[component] = 0 if not children else 1 + max(component_depth[child] for child in children)\n    return {\n        function_id: component_depth[component]\n        for function_id, component in condensed.graph[\"mapping\"].items()\n    }",
+      "calls": [],
+      "depth_from_entry": 2,
+      "depth_to_leaf": 0
+    },
+    {
+      "id": "function_index.py::analyze@162",
+      "file": "function_index.py",
+      "name": "analyze",
+      "qualified_name": "analyze",
+      "line": 162,
+      "end_line": 240,
+      "signature": "analyze(root: Path)",
+      "source": "def analyze(root: Path) -> dict[str, object]:\n    root = root.resolve()\n    if not root.is_dir():\n        raise ValueError(f\"not a directory: {root}\")\n\n    functions: list[FunctionInfo] = []\n    modules: list[tuple[str, ast.Module]] = []\n    errors: list[dict[str, object]] = []\n\n    for path in iter_python_files(root):\n        relative_path = path.relative_to(root).as_posix()\n        try:\n            source = path.read_text(encoding=\"utf-8\")\n            tree = ast.parse(source, filename=relative_path)\n        except (OSError, UnicodeError, SyntaxError) as error:\n            errors.append({\"file\": relative_path, \"error\": str(error)})\n            continue\n        collector = FunctionCollector(relative_path, source)\n        collector.visit(tree)\n        functions.extend(collector.functions)\n        modules.append((relative_path, tree))\n\n    symbols_by_file: dict[str, dict[str, list[FunctionInfo]]] = {}\n    for function in functions:\n        file_symbols = symbols_by_file.setdefault(function.file, {})\n        file_symbols.setdefault(function.qualified_name, []).append(function)\n\n    graph = nx.DiGraph()\n    graph.add_nodes_from(function.id for function in functions)\n    calls_by_function: dict[str, set[str]] = {function.id: set() for function in functions}\n    entry_points: set[str] = set()\n\n    for function in functions:\n        symbols = symbols_by_file[function.file]\n        for call in collect_calls(function.node.body):\n            target = resolve_call(call, function, symbols)\n            if target is not None:\n                graph.add_edge(function.id, target.id)\n                calls_by_function[function.id].add(target.id)\n\n    for file, tree in modules:\n        symbols = symbols_by_file.get(file, {})\n        for call in collect_calls(tree.body):\n            target = resolve_call(call, None, symbols)\n            if target is not None:\n                entry_points.add(target.id)\n\n    entry_depths = (\n        nx.multi_source_dijkstra_path_length(graph, entry_points, weight=None)\n        if entry_points\n        else {}\n    )\n    leaf_depths = bottom_depths(graph)\n\n    records = []\n    for function in sorted(functions, key=lambda item: (item.file, item.line, item.qualified_name)):\n        records.append(\n            {\n                \"id\": function.id,\n                \"file\": function.file,\n                \"name\": function.name,\n                \"qualified_name\": function.qualified_name,\n                \"line\": function.line,\n                \"end_line\": function.end_line,\n                \"signature\": function.signature,\n                \"source\": function.source,\n                \"calls\": sorted(calls_by_function[function.id]),\n                \"depth_from_entry\": entry_depths.get(function.id),\n                \"depth_to_leaf\": leaf_depths[function.id],\n            }\n        )\n\n    return {\n        \"schema_version\": SCHEMA_VERSION,\n        \"root\": str(root),\n        \"entry_points\": sorted(entry_points),\n        \"functions\": records,\n        \"errors\": errors,\n    }",
+      "calls": [
+        "function_index.py::bottom_depths@148",
+        "function_index.py::collect_calls@109",
+        "function_index.py::iter_python_files@103",
+        "function_index.py::resolve_call@121"
+      ],
+      "depth_from_entry": 1,
+      "depth_to_leaf": 2
+    },
+    {
+      "id": "function_index.py::parse_args@243",
+      "file": "function_index.py",
+      "name": "parse_args",
+      "qualified_name": "parse_args",
+      "line": 243,
+      "end_line": 247,
+      "signature": "parse_args()",
+      "source": "def parse_args() -> argparse.Namespace:\n    parser = argparse.ArgumentParser(description=__doc__)\n    parser.add_argument(\"directory\", type=Path, help=\"local Python repository or directory\")\n    parser.add_argument(\"-o\", \"--output\", type=Path, help=\"write JSON to this file instead of stdout\")\n    return parser.parse_args()",
+      "calls": [],
+      "depth_from_entry": 1,
+      "depth_to_leaf": 0
+    },
+    {
+      "id": "function_index.py::main@250",
+      "file": "function_index.py",
+      "name": "main",
+      "qualified_name": "main",
+      "line": 250,
+      "end_line": 257,
+      "signature": "main()",
+      "source": "def main() -> None:\n    args = parse_args()\n    result = analyze(args.directory)\n    encoded = json.dumps(result, indent=2, ensure_ascii=False) + \"\\n\"\n    if args.output:\n        args.output.write_text(encoded, encoding=\"utf-8\")\n    else:\n        print(encoded, end=\"\")",
+      "calls": [
+        "function_index.py::analyze@162",
+        "function_index.py::parse_args@243"
+      ],
+      "depth_from_entry": 0,
+      "depth_to_leaf": 3
+    },
+    {
+      "id": "tests/test_function_index.py::AnalyzeTests.test_indexes_functions_and_calculates_depths@9",
+      "file": "tests/test_function_index.py",
+      "name": "test_indexes_functions_and_calculates_depths",
+      "qualified_name": "AnalyzeTests.test_indexes_functions_and_calculates_depths",
+      "line": 9,
+      "end_line": 37,
+      "signature": "test_indexes_functions_and_calculates_depths(self)",
+      "source": "def test_indexes_functions_and_calculates_depths(self):\n        source = \"\"\"\\\ndef main():\n    middle()\n\ndef middle():\n    leaf()\n\ndef leaf():\n    return 1\n\nif __name__ == \"__main__\":\n    main()\n\"\"\"\n        with tempfile.TemporaryDirectory() as directory:\n            root = Path(directory)\n            (root / \"app.py\").write_text(source, encoding=\"utf-8\")\n\n            result = analyze(root)\n\n        functions = {item[\"name\"]: item for item in result[\"functions\"]}\n        self.assertEqual(result[\"entry_points\"], [functions[\"main\"][\"id\"]])\n        self.assertEqual(functions[\"main\"][\"depth_from_entry\"], 0)\n        self.assertEqual(functions[\"middle\"][\"depth_from_entry\"], 1)\n        self.assertEqual(functions[\"leaf\"][\"depth_from_entry\"], 2)\n        self.assertEqual(functions[\"main\"][\"depth_to_leaf\"], 2)\n        self.assertEqual(functions[\"middle\"][\"depth_to_leaf\"], 1)\n        self.assertEqual(functions[\"leaf\"][\"depth_to_leaf\"], 0)\n        self.assertIn(\"def leaf():\", functions[\"leaf\"][\"source\"])",
+      "calls": [],
+      "depth_from_entry": null,
+      "depth_to_leaf": 0
+    },
+    {
+      "id": "tests/test_function_index.py::AnalyzeTests.test_resolves_methods_and_collapses_recursive_cycles@39",
+      "file": "tests/test_function_index.py",
+      "name": "test_resolves_methods_and_collapses_recursive_cycles",
+      "qualified_name": "AnalyzeTests.test_resolves_methods_and_collapses_recursive_cycles",
+      "line": 39,
+      "end_line": 59,
+      "signature": "test_resolves_methods_and_collapses_recursive_cycles(self)",
+      "source": "def test_resolves_methods_and_collapses_recursive_cycles(self):\n        source = \"\"\"\\\nclass Worker:\n    def start(self):\n        self.loop()\n\n    def loop(self):\n        self.loop()\n\nWorker().start()\n\"\"\"\n        with tempfile.TemporaryDirectory() as directory:\n            root = Path(directory)\n            (root / \"worker.py\").write_text(source, encoding=\"utf-8\")\n\n            result = analyze(root)\n\n        functions = {item[\"name\"]: item for item in result[\"functions\"]}\n        self.assertEqual(functions[\"start\"][\"calls\"], [functions[\"loop\"][\"id\"]])\n        self.assertEqual(functions[\"loop\"][\"calls\"], [functions[\"loop\"][\"id\"]])\n        self.assertEqual(functions[\"loop\"][\"depth_to_leaf\"], 0)",
+      "calls": [],
+      "depth_from_entry": null,
+      "depth_to_leaf": 0
+    },
+    {
+      "id": "tests/test_function_index.py::AnalyzeTests.test_resolves_a_nested_function_call@61",
+      "file": "tests/test_function_index.py",
+      "name": "test_resolves_a_nested_function_call",
+      "qualified_name": "AnalyzeTests.test_resolves_a_nested_function_call",
+      "line": 61,
+      "end_line": 78,
+      "signature": "test_resolves_a_nested_function_call(self)",
+      "source": "def test_resolves_a_nested_function_call(self):\n        source = \"\"\"\\\ndef outer():\n    def inner():\n        return 1\n    return inner()\n\nouter()\n\"\"\"\n        with tempfile.TemporaryDirectory() as directory:\n            root = Path(directory)\n            (root / \"nested.py\").write_text(source, encoding=\"utf-8\")\n\n            result = analyze(root)\n\n        functions = {item[\"name\"]: item for item in result[\"functions\"]}\n        self.assertEqual(functions[\"outer\"][\"calls\"], [functions[\"inner\"][\"id\"]])\n        self.assertEqual(functions[\"inner\"][\"depth_from_entry\"], 1)",
+      "calls": [],
+      "depth_from_entry": null,
+      "depth_to_leaf": 0
+    }
+  ],
+  "errors": []
+}
