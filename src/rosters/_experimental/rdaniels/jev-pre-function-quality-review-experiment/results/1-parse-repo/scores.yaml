@@ -1,0 +1,3847 @@
+schema_version: '1.0'
+source:
+  judgments_file: /mnt/c/Users/rebek/School/F26/CS401R_F26/experiments/jev-pre-function-quality-review-experiment/results/1-parse-repo/function-review.yaml
+  function_metadata_file: /mnt/c/Users/rebek/School/F26/CS401R_F26/experiments/jev-pre-function-quality-review-experiment/results/1-parse-repo/parsed.json
+  judgment_schema_version: '1.0'
+scoring:
+  threshold: 0.85
+  threshold_comparison: favorable_probability >= threshold
+  basic_score: passed criteria / evaluated criteria
+  favorable_probability:
+    positive_criterion: probability_yes
+    negative_criterion: probability_no
+  function_weight: depth_to_leaf + 1
+  weighted_aggregate: sum(function basic score * function weight) / sum(function weight)
+  module_definition: parent directory of the reviewed file; '.' means repository root
+overall:
+  basic:
+    score: 0.752841
+    passed: 265
+    total: 352
+  weighted:
+    score: 0.722917
+    weighted_sum: 21.6875
+    total_weight: 30
+  categories:
+    readability_and_naming:
+      basic:
+        score: 0.875
+        passed: 77
+        total: 88
+      weighted:
+        score: 0.883333
+        weighted_sum: 26.5
+        total_weight: 30
+    function_and_class_size:
+      basic:
+        score: 0.757576
+        passed: 50
+        total: 66
+      weighted:
+        score: 0.766667
+        weighted_sum: 23
+        total_weight: 30
+    control_flow_and_complexity:
+      basic:
+        score: 0.897727
+        passed: 79
+        total: 88
+      weighted:
+        score: 0.833333
+        weighted_sum: 25
+        total_weight: 30
+    duplication_and_unexplained_values:
+      basic:
+        score: 0.515152
+        passed: 34
+        total: 66
+      weighted:
+        score: 0.455556
+        weighted_sum: 13.666667
+        total_weight: 30
+    inputs_errors_and_reporting:
+      basic:
+        score: 0.568182
+        passed: 25
+        total: 44
+      weighted:
+        score: 0.516667
+        weighted_sum: 15.5
+        total_weight: 30
+modules:
+- id: .
+  files:
+  - function_index.py
+  scores:
+    basic:
+      score: 0.756579
+      passed: 230
+      total: 304
+    weighted:
+      score: 0.722222
+      weighted_sum: 19.5
+      total_weight: 27
+    categories:
+      readability_and_naming:
+        basic:
+          score: 0.855263
+          passed: 65
+          total: 76
+        weighted:
+          score: 0.87037
+          weighted_sum: 23.5
+          total_weight: 27
+      function_and_class_size:
+        basic:
+          score: 0.789474
+          passed: 45
+          total: 57
+        weighted:
+          score: 0.790123
+          weighted_sum: 21.333333
+          total_weight: 27
+      control_flow_and_complexity:
+        basic:
+          score: 0.881579
+          passed: 67
+          total: 76
+        weighted:
+          score: 0.814815
+          weighted_sum: 22
+          total_weight: 27
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.54386
+          passed: 31
+          total: 57
+        weighted:
+          score: 0.469136
+          weighted_sum: 12.666667
+          total_weight: 27
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.578947
+          passed: 22
+          total: 38
+        weighted:
+          score: 0.518519
+          weighted_sum: 14
+          total_weight: 27
+- id: tests
+  files:
+  - tests/test_function_index.py
+  scores:
+    basic:
+      score: 0.729167
+      passed: 35
+      total: 48
+    weighted:
+      score: 0.729167
+      weighted_sum: 2.1875
+      total_weight: 3
+    categories:
+      readability_and_naming:
+        basic:
+          score: 1.0
+          passed: 12
+          total: 12
+        weighted:
+          score: 1.0
+          weighted_sum: 3
+          total_weight: 3
+      function_and_class_size:
+        basic:
+          score: 0.555556
+          passed: 5
+          total: 9
+        weighted:
+          score: 0.555556
+          weighted_sum: 1.666667
+          total_weight: 3
+      control_flow_and_complexity:
+        basic:
+          score: 1.0
+          passed: 12
+          total: 12
+        weighted:
+          score: 1.0
+          weighted_sum: 3
+          total_weight: 3
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.333333
+          passed: 3
+          total: 9
+        weighted:
+          score: 0.333333
+          weighted_sum: 1
+          total_weight: 3
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.5
+          passed: 3
+          total: 6
+        weighted:
+          score: 0.5
+          weighted_sum: 1.5
+          total_weight: 3
+files:
+- id: function_index.py
+  module: .
+  functions:
+  - function_index.py::FunctionCollector.__init__@36
+  - function_index.py::FunctionCollector.visit_ClassDef@44
+  - function_index.py::FunctionCollector.visit_FunctionDef@51
+  - function_index.py::FunctionCollector.visit_AsyncFunctionDef@54
+  - function_index.py::FunctionCollector._visit_function@57
+  - function_index.py::CallCollector.__init__@83
+  - function_index.py::CallCollector.visit_Call@86
+  - function_index.py::CallCollector.visit_FunctionDef@90
+  - function_index.py::CallCollector.visit_AsyncFunctionDef@93
+  - function_index.py::CallCollector.visit_ClassDef@96
+  - function_index.py::CallCollector.visit_Lambda@99
+  - function_index.py::iter_python_files@103
+  - function_index.py::collect_calls@109
+  - function_index.py::unique_symbol@116
+  - function_index.py::resolve_call@121
+  - function_index.py::bottom_depths@148
+  - function_index.py::analyze@162
+  - function_index.py::parse_args@243
+  - function_index.py::main@250
+  scores:
+    basic:
+      score: 0.756579
+      passed: 230
+      total: 304
+    weighted:
+      score: 0.722222
+      weighted_sum: 19.5
+      total_weight: 27
+    categories:
+      readability_and_naming:
+        basic:
+          score: 0.855263
+          passed: 65
+          total: 76
+        weighted:
+          score: 0.87037
+          weighted_sum: 23.5
+          total_weight: 27
+      function_and_class_size:
+        basic:
+          score: 0.789474
+          passed: 45
+          total: 57
+        weighted:
+          score: 0.790123
+          weighted_sum: 21.333333
+          total_weight: 27
+      control_flow_and_complexity:
+        basic:
+          score: 0.881579
+          passed: 67
+          total: 76
+        weighted:
+          score: 0.814815
+          weighted_sum: 22
+          total_weight: 27
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.54386
+          passed: 31
+          total: 57
+        weighted:
+          score: 0.469136
+          weighted_sum: 12.666667
+          total_weight: 27
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.578947
+          passed: 22
+          total: 38
+        weighted:
+          score: 0.518519
+          weighted_sum: 14
+          total_weight: 27
+- id: tests/test_function_index.py
+  module: tests
+  functions:
+  - tests/test_function_index.py::AnalyzeTests.test_indexes_functions_and_calculates_depths@9
+  - tests/test_function_index.py::AnalyzeTests.test_resolves_methods_and_collapses_recursive_cycles@39
+  - tests/test_function_index.py::AnalyzeTests.test_resolves_a_nested_function_call@61
+  scores:
+    basic:
+      score: 0.729167
+      passed: 35
+      total: 48
+    weighted:
+      score: 0.729167
+      weighted_sum: 2.1875
+      total_weight: 3
+    categories:
+      readability_and_naming:
+        basic:
+          score: 1.0
+          passed: 12
+          total: 12
+        weighted:
+          score: 1.0
+          weighted_sum: 3
+          total_weight: 3
+      function_and_class_size:
+        basic:
+          score: 0.555556
+          passed: 5
+          total: 9
+        weighted:
+          score: 0.555556
+          weighted_sum: 1.666667
+          total_weight: 3
+      control_flow_and_complexity:
+        basic:
+          score: 1.0
+          passed: 12
+          total: 12
+        weighted:
+          score: 1.0
+          weighted_sum: 3
+          total_weight: 3
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.333333
+          passed: 3
+          total: 9
+        weighted:
+          score: 0.333333
+          weighted_sum: 1
+          total_weight: 3
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.5
+          passed: 3
+          total: 6
+        weighted:
+          score: 0.5
+          weighted_sum: 1.5
+          total_weight: 3
+functions:
+- id: function_index.py::FunctionCollector.__init__@36
+  file: function_index.py
+  module: .
+  name: __init__
+  qualified_name: FunctionCollector.__init__
+  line: 36
+  depth_to_leaf: 0
+  weight: 1
+  scores:
+    basic:
+      score: 0.8125
+      passed: 13
+      total: 16
+    weighted:
+      score: 0.8125
+      weighted_contribution: 0.8125
+      weight: 1
+    categories:
+      readability_and_naming:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      function_and_class_size:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 0.666667
+          weight: 1
+      control_flow_and_complexity:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 0.666667
+          weight: 1
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.5
+          passed: 1
+          total: 2
+        weighted:
+          score: 0.5
+          weighted_contribution: 0.5
+          weight: 1
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.97
+      passed: true
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.94
+      passed: true
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.85
+      passed: true
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.9
+      passed: true
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.94
+      passed: true
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.64
+      passed: false
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.9
+      passed: true
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.76
+      passed: false
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.92
+      passed: true
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.93
+      passed: true
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.8
+      passed: false
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+- id: function_index.py::FunctionCollector.visit_ClassDef@44
+  file: function_index.py
+  module: .
+  name: visit_ClassDef
+  qualified_name: FunctionCollector.visit_ClassDef
+  line: 44
+  depth_to_leaf: 0
+  weight: 1
+  scores:
+    basic:
+      score: 0.8125
+      passed: 13
+      total: 16
+    weighted:
+      score: 0.8125
+      weighted_contribution: 0.8125
+      weight: 1
+    categories:
+      readability_and_naming:
+        basic:
+          score: 0.75
+          passed: 3
+          total: 4
+        weighted:
+          score: 0.75
+          weighted_contribution: 0.75
+          weight: 1
+      function_and_class_size:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 0.666667
+          weight: 1
+      control_flow_and_complexity:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 0.666667
+          weight: 1
+      inputs_errors_and_reporting:
+        basic:
+          score: 1.0
+          passed: 2
+          total: 2
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.92
+      passed: true
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.91
+      passed: true
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.78
+      passed: false
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.87
+      passed: true
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.93
+      passed: true
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.61
+      passed: false
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.94
+      passed: true
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.22
+      passed: false
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.89
+      passed: true
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.92
+      passed: true
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.85
+      passed: true
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+- id: function_index.py::FunctionCollector.visit_FunctionDef@51
+  file: function_index.py
+  module: .
+  name: visit_FunctionDef
+  qualified_name: FunctionCollector.visit_FunctionDef
+  line: 51
+  depth_to_leaf: 1
+  weight: 2
+  scores:
+    basic:
+      score: 0.8125
+      passed: 13
+      total: 16
+    weighted:
+      score: 0.8125
+      weighted_contribution: 1.625
+      weight: 2
+    categories:
+      readability_and_naming:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 2.0
+          weight: 2
+      function_and_class_size:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 1.333334
+          weight: 2
+      control_flow_and_complexity:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 2.0
+          weight: 2
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 1.333334
+          weight: 2
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.5
+          passed: 1
+          total: 2
+        weighted:
+          score: 0.5
+          weighted_contribution: 1.0
+          weight: 2
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.94
+      passed: true
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.94
+      passed: true
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.91
+      passed: true
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.94
+      passed: true
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.71
+      passed: false
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.32
+      passed: false
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.94
+      passed: true
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.91
+      passed: true
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.82
+      passed: false
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+- id: function_index.py::FunctionCollector.visit_AsyncFunctionDef@54
+  file: function_index.py
+  module: .
+  name: visit_AsyncFunctionDef
+  qualified_name: FunctionCollector.visit_AsyncFunctionDef
+  line: 54
+  depth_to_leaf: 1
+  weight: 2
+  scores:
+    basic:
+      score: 0.8125
+      passed: 13
+      total: 16
+    weighted:
+      score: 0.8125
+      weighted_contribution: 1.625
+      weight: 2
+    categories:
+      readability_and_naming:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 2.0
+          weight: 2
+      function_and_class_size:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 1.333334
+          weight: 2
+      control_flow_and_complexity:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 2.0
+          weight: 2
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 1.333334
+          weight: 2
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.5
+          passed: 1
+          total: 2
+        weighted:
+          score: 0.5
+          weighted_contribution: 1.0
+          weight: 2
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.96
+      passed: true
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.95
+      passed: true
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.91
+      passed: true
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.94
+      passed: true
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.7
+      passed: false
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.26
+      passed: false
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.9
+      passed: true
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.84
+      passed: false
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+- id: function_index.py::FunctionCollector._visit_function@57
+  file: function_index.py
+  module: .
+  name: _visit_function
+  qualified_name: FunctionCollector._visit_function
+  line: 57
+  depth_to_leaf: 0
+  weight: 1
+  scores:
+    basic:
+      score: 0.75
+      passed: 12
+      total: 16
+    weighted:
+      score: 0.75
+      weighted_contribution: 0.75
+      weight: 1
+    categories:
+      readability_and_naming:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      function_and_class_size:
+        basic:
+          score: 0.333333
+          passed: 1
+          total: 3
+        weighted:
+          score: 0.333333
+          weighted_contribution: 0.333333
+          weight: 1
+      control_flow_and_complexity:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 0.666667
+          weight: 1
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.5
+          passed: 1
+          total: 2
+        weighted:
+          score: 0.5
+          weighted_contribution: 0.5
+          weight: 1
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.87
+      passed: true
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.95
+      passed: true
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.85
+      passed: true
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.87
+      passed: true
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.71
+      passed: false
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.75
+      passed: false
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.89
+      passed: true
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.9
+      passed: true
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.41
+      passed: false
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.86
+      passed: true
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.87
+      passed: true
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.75
+      passed: false
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+- id: function_index.py::CallCollector.__init__@83
+  file: function_index.py
+  module: .
+  name: __init__
+  qualified_name: CallCollector.__init__
+  line: 83
+  depth_to_leaf: 0
+  weight: 1
+  scores:
+    basic:
+      score: 0.875
+      passed: 14
+      total: 16
+    weighted:
+      score: 0.875
+      weighted_contribution: 0.875
+      weight: 1
+    categories:
+      readability_and_naming:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      function_and_class_size:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 0.666667
+          weight: 1
+      control_flow_and_complexity:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 0.666667
+          weight: 1
+      inputs_errors_and_reporting:
+        basic:
+          score: 1.0
+          passed: 2
+          total: 2
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.97
+      passed: true
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.94
+      passed: true
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.92
+      passed: true
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.91
+      passed: true
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.78
+      passed: false
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.62
+      passed: false
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.94
+      passed: true
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.94
+      passed: true
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.89
+      passed: true
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+- id: function_index.py::CallCollector.visit_Call@86
+  file: function_index.py
+  module: .
+  name: visit_Call
+  qualified_name: CallCollector.visit_Call
+  line: 86
+  depth_to_leaf: 0
+  weight: 1
+  scores:
+    basic:
+      score: 0.875
+      passed: 14
+      total: 16
+    weighted:
+      score: 0.875
+      weighted_contribution: 0.875
+      weight: 1
+    categories:
+      readability_and_naming:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      function_and_class_size:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 0.666667
+          weight: 1
+      control_flow_and_complexity:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 0.666667
+          weight: 1
+      inputs_errors_and_reporting:
+        basic:
+          score: 1.0
+          passed: 2
+          total: 2
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.96
+      passed: true
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.94
+      passed: true
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.91
+      passed: true
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.9
+      passed: true
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.79
+      passed: false
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.72
+      passed: false
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.93
+      passed: true
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.85
+      passed: true
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+- id: function_index.py::CallCollector.visit_FunctionDef@90
+  file: function_index.py
+  module: .
+  name: visit_FunctionDef
+  qualified_name: CallCollector.visit_FunctionDef
+  line: 90
+  depth_to_leaf: 0
+  weight: 1
+  scores:
+    basic:
+      score: 0.75
+      passed: 12
+      total: 16
+    weighted:
+      score: 0.75
+      weighted_contribution: 0.75
+      weight: 1
+    categories:
+      readability_and_naming:
+        basic:
+          score: 0.5
+          passed: 2
+          total: 4
+        weighted:
+          score: 0.5
+          weighted_contribution: 0.5
+          weight: 1
+      function_and_class_size:
+        basic:
+          score: 1.0
+          passed: 3
+          total: 3
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      control_flow_and_complexity:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 0.666667
+          weight: 1
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.5
+          passed: 1
+          total: 2
+        weighted:
+          score: 0.5
+          weighted_contribution: 0.5
+          weight: 1
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.97
+      passed: true
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.41
+      passed: false
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.87
+      passed: true
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.71
+      passed: false
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.98
+      passed: true
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.85
+      passed: true
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.4
+      passed: false
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.93
+      passed: true
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.81
+      passed: false
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.94
+      passed: true
+- id: function_index.py::CallCollector.visit_AsyncFunctionDef@93
+  file: function_index.py
+  module: .
+  name: visit_AsyncFunctionDef
+  qualified_name: CallCollector.visit_AsyncFunctionDef
+  line: 93
+  depth_to_leaf: 0
+  weight: 1
+  scores:
+    basic:
+      score: 0.6875
+      passed: 11
+      total: 16
+    weighted:
+      score: 0.6875
+      weighted_contribution: 0.6875
+      weight: 1
+    categories:
+      readability_and_naming:
+        basic:
+          score: 0.5
+          passed: 2
+          total: 4
+        weighted:
+          score: 0.5
+          weighted_contribution: 0.5
+          weight: 1
+      function_and_class_size:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 0.666667
+          weight: 1
+      control_flow_and_complexity:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 0.666667
+          weight: 1
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.5
+          passed: 1
+          total: 2
+        weighted:
+          score: 0.5
+          weighted_contribution: 0.5
+          weight: 1
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.97
+      passed: true
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.51
+      passed: false
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.89
+      passed: true
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.56
+      passed: false
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.98
+      passed: true
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.84
+      passed: false
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.34
+      passed: false
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.93
+      passed: true
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.82
+      passed: false
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+- id: function_index.py::CallCollector.visit_ClassDef@96
+  file: function_index.py
+  module: .
+  name: visit_ClassDef
+  qualified_name: CallCollector.visit_ClassDef
+  line: 96
+  depth_to_leaf: 0
+  weight: 1
+  scores:
+    basic:
+      score: 0.8125
+      passed: 13
+      total: 16
+    weighted:
+      score: 0.8125
+      weighted_contribution: 0.8125
+      weight: 1
+    categories:
+      readability_and_naming:
+        basic:
+          score: 0.5
+          passed: 2
+          total: 4
+        weighted:
+          score: 0.5
+          weighted_contribution: 0.5
+          weight: 1
+      function_and_class_size:
+        basic:
+          score: 1.0
+          passed: 3
+          total: 3
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      control_flow_and_complexity:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 0.666667
+          weight: 1
+      inputs_errors_and_reporting:
+        basic:
+          score: 1.0
+          passed: 2
+          total: 2
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.97
+      passed: true
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.51
+      passed: false
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.88
+      passed: true
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.71
+      passed: false
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.98
+      passed: true
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.86
+      passed: true
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.39
+      passed: false
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.92
+      passed: true
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.85
+      passed: true
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.94
+      passed: true
+- id: function_index.py::CallCollector.visit_Lambda@99
+  file: function_index.py
+  module: .
+  name: visit_Lambda
+  qualified_name: CallCollector.visit_Lambda
+  line: 99
+  depth_to_leaf: 0
+  weight: 1
+  scores:
+    basic:
+      score: 0.75
+      passed: 12
+      total: 16
+    weighted:
+      score: 0.75
+      weighted_contribution: 0.75
+      weight: 1
+    categories:
+      readability_and_naming:
+        basic:
+          score: 0.75
+          passed: 3
+          total: 4
+        weighted:
+          score: 0.75
+          weighted_contribution: 0.75
+          weight: 1
+      function_and_class_size:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 0.666667
+          weight: 1
+      control_flow_and_complexity:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 0.666667
+          weight: 1
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.5
+          passed: 1
+          total: 2
+        weighted:
+          score: 0.5
+          weighted_contribution: 0.5
+          weight: 1
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.97
+      passed: true
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.73
+      passed: false
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.88
+      passed: true
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.89
+      passed: true
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.98
+      passed: true
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.84
+      passed: false
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.34
+      passed: false
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.93
+      passed: true
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.84
+      passed: false
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+- id: function_index.py::iter_python_files@103
+  file: function_index.py
+  module: .
+  name: iter_python_files
+  qualified_name: iter_python_files
+  line: 103
+  depth_to_leaf: 0
+  weight: 1
+  scores:
+    basic:
+      score: 0.6875
+      passed: 11
+      total: 16
+    weighted:
+      score: 0.6875
+      weighted_contribution: 0.6875
+      weight: 1
+    categories:
+      readability_and_naming:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      function_and_class_size:
+        basic:
+          score: 1.0
+          passed: 3
+          total: 3
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      control_flow_and_complexity:
+        basic:
+          score: 0.5
+          passed: 2
+          total: 4
+        weighted:
+          score: 0.5
+          weighted_contribution: 0.5
+          weight: 1
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.333333
+          passed: 1
+          total: 3
+        weighted:
+          score: 0.333333
+          weighted_contribution: 0.333333
+          weight: 1
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.5
+          passed: 1
+          total: 2
+        weighted:
+          score: 0.5
+          weighted_contribution: 0.5
+          weight: 1
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.88
+      passed: true
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.97
+      passed: true
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.87
+      passed: true
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.89
+      passed: true
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.94
+      passed: true
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.78
+      passed: false
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.43
+      passed: false
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.85
+      passed: true
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.85
+      passed: true
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.78
+      passed: false
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.74
+      passed: false
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.77
+      passed: false
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+- id: function_index.py::collect_calls@109
+  file: function_index.py
+  module: .
+  name: collect_calls
+  qualified_name: collect_calls
+  line: 109
+  depth_to_leaf: 0
+  weight: 1
+  scores:
+    basic:
+      score: 0.875
+      passed: 14
+      total: 16
+    weighted:
+      score: 0.875
+      weighted_contribution: 0.875
+      weight: 1
+    categories:
+      readability_and_naming:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      function_and_class_size:
+        basic:
+          score: 1.0
+          passed: 3
+          total: 3
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      control_flow_and_complexity:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 0.666667
+          weight: 1
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.5
+          passed: 1
+          total: 2
+        weighted:
+          score: 0.5
+          weighted_contribution: 0.5
+          weight: 1
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.94
+      passed: true
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.95
+      passed: true
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.9
+      passed: true
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.89
+      passed: true
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.94
+      passed: true
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.91
+      passed: true
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.94
+      passed: true
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.7
+      passed: false
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.92
+      passed: true
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.77
+      passed: false
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+- id: function_index.py::unique_symbol@116
+  file: function_index.py
+  module: .
+  name: unique_symbol
+  qualified_name: unique_symbol
+  line: 116
+  depth_to_leaf: 0
+  weight: 1
+  scores:
+    basic:
+      score: 0.8125
+      passed: 13
+      total: 16
+    weighted:
+      score: 0.8125
+      weighted_contribution: 0.8125
+      weight: 1
+    categories:
+      readability_and_naming:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      function_and_class_size:
+        basic:
+          score: 1.0
+          passed: 3
+          total: 3
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      control_flow_and_complexity:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.333333
+          passed: 1
+          total: 3
+        weighted:
+          score: 0.333333
+          weighted_contribution: 0.333333
+          weight: 1
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.5
+          passed: 1
+          total: 2
+        weighted:
+          score: 0.5
+          weighted_contribution: 0.5
+          weight: 1
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.96
+      passed: true
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.95
+      passed: true
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.88
+      passed: true
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.89
+      passed: true
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.91
+      passed: true
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.9
+      passed: true
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.8
+      passed: false
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.86
+      passed: true
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.7
+      passed: false
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.79
+      passed: false
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+- id: function_index.py::resolve_call@121
+  file: function_index.py
+  module: .
+  name: resolve_call
+  qualified_name: resolve_call
+  line: 121
+  depth_to_leaf: 1
+  weight: 2
+  scores:
+    basic:
+      score: 0.5
+      passed: 8
+      total: 16
+    weighted:
+      score: 0.5
+      weighted_contribution: 1.0
+      weight: 2
+    categories:
+      readability_and_naming:
+        basic:
+          score: 0.75
+          passed: 3
+          total: 4
+        weighted:
+          score: 0.75
+          weighted_contribution: 1.5
+          weight: 2
+      function_and_class_size:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 1.333334
+          weight: 2
+      control_flow_and_complexity:
+        basic:
+          score: 0.5
+          passed: 2
+          total: 4
+        weighted:
+          score: 0.5
+          weighted_contribution: 1.0
+          weight: 2
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.0
+          passed: 0
+          total: 3
+        weighted:
+          score: 0.0
+          weighted_contribution: 0.0
+          weight: 2
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.5
+          passed: 1
+          total: 2
+        weighted:
+          score: 0.5
+          weighted_contribution: 1.0
+          weight: 2
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.84
+      passed: false
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.94
+      passed: true
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.88
+      passed: true
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.9
+      passed: true
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.87
+      passed: true
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.84
+      passed: false
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.78
+      passed: false
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.12
+      passed: false
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.92
+      passed: true
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.92
+      passed: true
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.73
+      passed: false
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.8
+      passed: false
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.66
+      passed: false
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.77
+      passed: false
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+- id: function_index.py::bottom_depths@148
+  file: function_index.py
+  module: .
+  name: bottom_depths
+  qualified_name: bottom_depths
+  line: 148
+  depth_to_leaf: 0
+  weight: 1
+  scores:
+    basic:
+      score: 0.6875
+      passed: 11
+      total: 16
+    weighted:
+      score: 0.6875
+      weighted_contribution: 0.6875
+      weight: 1
+    categories:
+      readability_and_naming:
+        basic:
+          score: 0.75
+          passed: 3
+          total: 4
+        weighted:
+          score: 0.75
+          weighted_contribution: 0.75
+          weight: 1
+      function_and_class_size:
+        basic:
+          score: 1.0
+          passed: 3
+          total: 3
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      control_flow_and_complexity:
+        basic:
+          score: 0.75
+          passed: 3
+          total: 4
+        weighted:
+          score: 0.75
+          weighted_contribution: 0.75
+          weight: 1
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.333333
+          passed: 1
+          total: 3
+        weighted:
+          score: 0.333333
+          weighted_contribution: 0.333333
+          weight: 1
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.5
+          passed: 1
+          total: 2
+        weighted:
+          score: 0.5
+          weighted_contribution: 0.5
+          weight: 1
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.79
+      passed: false
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.93
+      passed: true
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.86
+      passed: true
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.86
+      passed: true
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.85
+      passed: true
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.84
+      passed: false
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.9
+      passed: true
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.93
+      passed: true
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.85
+      passed: true
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.91
+      passed: true
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.78
+      passed: false
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.62
+      passed: false
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.73
+      passed: false
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+- id: function_index.py::analyze@162
+  file: function_index.py
+  module: .
+  name: analyze
+  qualified_name: analyze
+  line: 162
+  depth_to_leaf: 2
+  weight: 3
+  scores:
+    basic:
+      score: 0.375
+      passed: 6
+      total: 16
+    weighted:
+      score: 0.375
+      weighted_contribution: 1.125
+      weight: 3
+    categories:
+      readability_and_naming:
+        basic:
+          score: 0.75
+          passed: 3
+          total: 4
+        weighted:
+          score: 0.75
+          weighted_contribution: 2.25
+          weight: 3
+      function_and_class_size:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 2.000001
+          weight: 3
+      control_flow_and_complexity:
+        basic:
+          score: 0.25
+          passed: 1
+          total: 4
+        weighted:
+          score: 0.25
+          weighted_contribution: 0.75
+          weight: 3
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.0
+          passed: 0
+          total: 3
+        weighted:
+          score: 0.0
+          weighted_contribution: 0.0
+          weight: 3
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.0
+          passed: 0
+          total: 2
+        weighted:
+          score: 0.0
+          weighted_contribution: 0.0
+          weight: 3
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.75
+      passed: false
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.92
+      passed: true
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.9
+      passed: true
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.89
+      passed: true
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.12
+      passed: false
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.45
+      passed: false
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.47
+      passed: false
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.94
+      passed: true
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.81
+      passed: false
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.79
+      passed: false
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.75
+      passed: false
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.49
+      passed: false
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.8
+      passed: false
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.72
+      passed: false
+- id: function_index.py::parse_args@243
+  file: function_index.py
+  module: .
+  name: parse_args
+  qualified_name: parse_args
+  line: 243
+  depth_to_leaf: 0
+  weight: 1
+  scores:
+    basic:
+      score: 0.9375
+      passed: 15
+      total: 16
+    weighted:
+      score: 0.9375
+      weighted_contribution: 0.9375
+      weight: 1
+    categories:
+      readability_and_naming:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      function_and_class_size:
+        basic:
+          score: 1.0
+          passed: 3
+          total: 3
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      control_flow_and_complexity:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      duplication_and_unexplained_values:
+        basic:
+          score: 1.0
+          passed: 3
+          total: 3
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.5
+          passed: 1
+          total: 2
+        weighted:
+          score: 0.5
+          weighted_contribution: 0.5
+          weight: 1
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.97
+      passed: true
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.97
+      passed: true
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.93
+      passed: true
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.9
+      passed: true
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.89
+      passed: true
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.93
+      passed: true
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.9
+      passed: true
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.94
+      passed: true
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.79
+      passed: false
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+- id: function_index.py::main@250
+  file: function_index.py
+  module: .
+  name: main
+  qualified_name: main
+  line: 250
+  depth_to_leaf: 3
+  weight: 4
+  scores:
+    basic:
+      score: 0.75
+      passed: 12
+      total: 16
+    weighted:
+      score: 0.75
+      weighted_contribution: 3.0
+      weight: 4
+    categories:
+      readability_and_naming:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 4.0
+          weight: 4
+      function_and_class_size:
+        basic:
+          score: 1.0
+          passed: 3
+          total: 3
+        weighted:
+          score: 1.0
+          weighted_contribution: 4.0
+          weight: 4
+      control_flow_and_complexity:
+        basic:
+          score: 0.75
+          passed: 3
+          total: 4
+        weighted:
+          score: 0.75
+          weighted_contribution: 3.0
+          weight: 4
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.333333
+          passed: 1
+          total: 3
+        weighted:
+          score: 0.333333
+          weighted_contribution: 1.333332
+          weight: 4
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.5
+          passed: 1
+          total: 2
+        weighted:
+          score: 0.5
+          weighted_contribution: 2.0
+          weight: 4
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.94
+      passed: true
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.93
+      passed: true
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.86
+      passed: true
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.9
+      passed: true
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.86
+      passed: true
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.93
+      passed: true
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.93
+      passed: true
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.64
+      passed: false
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.91
+      passed: true
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.9
+      passed: true
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.79
+      passed: false
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.72
+      passed: false
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.79
+      passed: false
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.9
+      passed: true
+- id: tests/test_function_index.py::AnalyzeTests.test_indexes_functions_and_calculates_depths@9
+  file: tests/test_function_index.py
+  module: tests
+  name: test_indexes_functions_and_calculates_depths
+  qualified_name: AnalyzeTests.test_indexes_functions_and_calculates_depths
+  line: 9
+  depth_to_leaf: 0
+  weight: 1
+  scores:
+    basic:
+      score: 0.6875
+      passed: 11
+      total: 16
+    weighted:
+      score: 0.6875
+      weighted_contribution: 0.6875
+      weight: 1
+    categories:
+      readability_and_naming:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      function_and_class_size:
+        basic:
+          score: 0.333333
+          passed: 1
+          total: 3
+        weighted:
+          score: 0.333333
+          weighted_contribution: 0.333333
+          weight: 1
+      control_flow_and_complexity:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.333333
+          passed: 1
+          total: 3
+        weighted:
+          score: 0.333333
+          weighted_contribution: 0.333333
+          weight: 1
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.5
+          passed: 1
+          total: 2
+        weighted:
+          score: 0.5
+          weighted_contribution: 0.5
+          weight: 1
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.9
+      passed: true
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.95
+      passed: true
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.89
+      passed: true
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.92
+      passed: true
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.72
+      passed: false
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.81
+      passed: false
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.93
+      passed: true
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.26
+      passed: false
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.8
+      passed: false
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.92
+      passed: true
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.81
+      passed: false
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+- id: tests/test_function_index.py::AnalyzeTests.test_resolves_methods_and_collapses_recursive_cycles@39
+  file: tests/test_function_index.py
+  module: tests
+  name: test_resolves_methods_and_collapses_recursive_cycles
+  qualified_name: AnalyzeTests.test_resolves_methods_and_collapses_recursive_cycles
+  line: 39
+  depth_to_leaf: 0
+  weight: 1
+  scores:
+    basic:
+      score: 0.75
+      passed: 12
+      total: 16
+    weighted:
+      score: 0.75
+      weighted_contribution: 0.75
+      weight: 1
+    categories:
+      readability_and_naming:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      function_and_class_size:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 0.666667
+          weight: 1
+      control_flow_and_complexity:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.333333
+          passed: 1
+          total: 3
+        weighted:
+          score: 0.333333
+          weighted_contribution: 0.333333
+          weight: 1
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.5
+          passed: 1
+          total: 2
+        weighted:
+          score: 0.5
+          weighted_contribution: 0.5
+          weight: 1
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.89
+      passed: true
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.94
+      passed: true
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.86
+      passed: true
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.91
+      passed: true
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.85
+      passed: true
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.84
+      passed: false
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.97
+      passed: true
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.94
+      passed: true
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.24
+      passed: false
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.79
+      passed: false
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.92
+      passed: true
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.83
+      passed: false
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+- id: tests/test_function_index.py::AnalyzeTests.test_resolves_a_nested_function_call@61
+  file: tests/test_function_index.py
+  module: tests
+  name: test_resolves_a_nested_function_call
+  qualified_name: AnalyzeTests.test_resolves_a_nested_function_call
+  line: 61
+  depth_to_leaf: 0
+  weight: 1
+  scores:
+    basic:
+      score: 0.75
+      passed: 12
+      total: 16
+    weighted:
+      score: 0.75
+      weighted_contribution: 0.75
+      weight: 1
+    categories:
+      readability_and_naming:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      function_and_class_size:
+        basic:
+          score: 0.666667
+          passed: 2
+          total: 3
+        weighted:
+          score: 0.666667
+          weighted_contribution: 0.666667
+          weight: 1
+      control_flow_and_complexity:
+        basic:
+          score: 1.0
+          passed: 4
+          total: 4
+        weighted:
+          score: 1.0
+          weighted_contribution: 1.0
+          weight: 1
+      duplication_and_unexplained_values:
+        basic:
+          score: 0.333333
+          passed: 1
+          total: 3
+        weighted:
+          score: 0.333333
+          weighted_contribution: 0.333333
+          weight: 1
+      inputs_errors_and_reporting:
+        basic:
+          score: 0.5
+          passed: 1
+          total: 2
+        weighted:
+          score: 0.5
+          weighted_contribution: 0.5
+          weight: 1
+  criteria:
+    easy_to_follow:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.9
+      passed: true
+    purpose_is_apparent:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.94
+      passed: true
+    names_are_descriptive:
+      category: readability_and_naming
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.89
+      passed: true
+    inconsistent_naming:
+      category: readability_and_naming
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.9
+      passed: true
+    unusually_long_or_many_steps:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.87
+      passed: true
+    owning_class_is_large:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.84
+      passed: false
+    long_parameter_list:
+      category: function_and_class_size
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    excessive_nesting:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true
+    complex_conditionals:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    flag_argument:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    message_chain:
+      category: control_flow_and_complexity
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.95
+      passed: true
+    duplicated_code:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.18
+      passed: false
+    magic_values:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.79
+      passed: false
+    repeated_conditionals:
+      category: duplication_and_unexplained_values
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.93
+      passed: true
+    appropriate_error_handling:
+      category: inputs_errors_and_reporting
+      polarity: positive
+      favorable_answer: 'yes'
+      favorable_probability: 0.8
+      passed: false
+    broad_or_silent_exception_handling:
+      category: inputs_errors_and_reporting
+      polarity: negative
+      favorable_answer: 'no'
+      favorable_probability: 0.96
+      passed: true

@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Code quality atlas</title>
+  <style>
+    :root {
+      --ink: #172522;
+      --muted: #64736f;
+      --paper: #f2f7f5;
+      --panel: #ffffff;
+      --line: #ccd9d5;
+      --deep: #163f38;
+      --good: #25836f;
+      --middle: #d9aa43;
+      --bad: #c64f48;
+      --focus: #245fdb;
+      --shadow: 0 14px 40px rgba(28, 60, 52, 0.09);
+      font-family: Aptos, "Segoe UI", system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; }
+    button, input, select { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--focus) 65%, transparent);
+      outline-offset: 2px;
+    }
+
+    .masthead {
+      padding: clamp(2rem, 5vw, 4.5rem) clamp(1rem, 5vw, 5rem) 1.4rem;
+      background: var(--deep);
+      color: white;
+    }
+    .masthead__inner { max-width: 1500px; margin: 0 auto; }
+    .masthead h1 {
+      margin: 0;
+      max-width: 16ch;
+      font-size: clamp(2.3rem, 6vw, 5.7rem);
+      line-height: 0.94;
+      letter-spacing: -0.055em;
+      font-weight: 720;
+    }
+    .masthead p {
+      margin: 1.4rem 0 0;
+      max-width: 58ch;
+      color: #c9ddd7;
+      font-size: clamp(1rem, 1.5vw, 1.2rem);
+      line-height: 1.55;
+    }
+
+    .project-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1px;
+      max-width: 1500px;
+      margin: 2.5rem auto 0;
+      background: #54756d;
+      border: 1px solid #54756d;
+    }
+    .project-card {
+      min-height: 126px;
+      padding: 1rem 1.1rem;
+      border: 0;
+      background: #214d45;
+      color: white;
+      text-align: left;
+      cursor: pointer;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: .7rem;
+      align-items: end;
+    }
+    .project-card:hover { background: #285b52; }
+    .project-card[aria-selected="true"] {
+      background: white;
+      color: var(--ink);
+      box-shadow: inset 0 -5px var(--score-color);
+    }
+    .project-card__name {
+      align-self: start;
+      min-width: 0;
+      font-weight: 650;
+      overflow-wrap: anywhere;
+    }
+    .project-card__score {
+      font-size: clamp(2.3rem, 4vw, 3.7rem);
+      line-height: .8;
+      letter-spacing: -.055em;
+      font-variant-numeric: tabular-nums;
+    }
+    .project-card__meta { font-size: .8rem; opacity: .72; }
+
+    .app { max-width: 1500px; margin: 0 auto; padding: 2rem clamp(1rem, 4vw, 3.5rem) 4rem; }
+    .project-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .project-heading h2 {
+      margin: 0;
+      font-size: clamp(1.8rem, 4vw, 3.4rem);
+      letter-spacing: -.045em;
+      line-height: 1;
+    }
+    .project-heading__meta { margin-top: .55rem; color: var(--muted); }
+    .score-pair { display: flex; gap: 1.5rem; flex: 0 0 auto; }
+    .score-pair__item { text-align: right; }
+    .score-pair__value {
+      display: block;
+      font-size: 2rem;
+      line-height: 1;
+      letter-spacing: -.04em;
+      font-variant-numeric: tabular-nums;
+    }
+    .score-pair__label { color: var(--muted); font-size: .78rem; }
+
+    .controls {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: end;
+      gap: .7rem;
+      margin: 1.5rem 0;
+      padding: .75rem;
+      background: rgba(242, 247, 245, .94);
+      border: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 5px 18px rgba(31, 63, 55, .06);
+    }
+    .control { display: grid; gap: .25rem; }
+    .control label { color: var(--muted); font-size: .76rem; }
+    select, input[type="search"] {
+      min-height: 40px;
+      border: 1px solid #aebfba;
+      background: white;
+      color: var(--ink);
+      padding: .45rem .65rem;
+      border-radius: 3px;
+    }
+    input[type="search"] { width: min(260px, 70vw); }
+    .segmented { display: flex; border: 1px solid #aebfba; background: white; border-radius: 3px; }
+    .segmented button { min-height: 38px; border: 0; padding: .45rem .72rem; background: transparent; cursor: pointer; }
+    .segmented button[aria-pressed="true"] { background: var(--deep); color: white; }
+    .controls__spacer { flex: 1; }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(260px, .78fr);
+      gap: 1rem;
+      align-items: stretch;
+    }
+    .map-panel, .rank-panel, .inspector {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+    .panel-head { padding: 1rem 1.1rem .8rem; display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; }
+    .panel-head h3 { margin: 0; font-size: 1.05rem; }
+    .panel-head p { margin: 0; color: var(--muted); font-size: .82rem; }
+    .heatmap { position: relative; min-height: 520px; margin: 0 .8rem .8rem; background: #e4ece9; overflow: hidden; }
+    .tile {
+      position: absolute;
+      border: 2px solid white;
+      padding: .72rem;
+      background: var(--tile-color);
+      color: var(--tile-ink);
+      text-align: left;
+      cursor: pointer;
+      overflow: hidden;
+      transition: filter 120ms ease;
+    }
+    .tile:hover { filter: brightness(.94); z-index: 2; }
+    .tile__name { display: block; font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
+    .tile__score { display: block; margin-top: .3rem; font-size: clamp(1rem, 2vw, 1.7rem); line-height: 1; font-variant-numeric: tabular-nums; }
+    .tile__delta { display: block; margin-top: .25rem; font-size: .72rem; opacity: .8; }
+    .tile--tiny { padding: .28rem; }
+    .tile--tiny .tile__score, .tile--tiny .tile__delta { display: none; }
+    .tile--micro { padding: 0; }
+    .tile--micro > * { display: none; }
+
+    .legend { display: flex; align-items: center; gap: .55rem; color: var(--muted); font-size: .75rem; }
+    .legend__bar { width: 100px; height: 8px; background: linear-gradient(90deg, var(--bad), var(--middle), var(--good)); }
+
+    .rank-list { margin: 0; padding: 0 .75rem .75rem; list-style: none; max-height: 520px; overflow: auto; }
+    .rank-item button {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 2.2rem minmax(0, 1fr) auto;
+      gap: .55rem;
+      align-items: center;
+      padding: .72rem .35rem;
+      border: 0;
+      border-bottom: 1px solid #e3eae8;
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+    }
+    .rank-item button:hover { background: #f3f7f6; }
+    .rank-item__index { color: var(--muted); font-variant-numeric: tabular-nums; }
+    .rank-item__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rank-item__score { font-weight: 750; font-variant-numeric: tabular-nums; }
+
+    .inspector { margin-top: 1rem; min-height: 180px; }
+    .inspector__empty { padding: 3.5rem 1.5rem; text-align: center; color: var(--muted); }
+    .inspector__head { padding: 1.2rem 1.3rem; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 1fr auto; gap: 1rem; }
+    .breadcrumbs { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; margin-bottom: .65rem; color: var(--muted); font-size: .8rem; }
+    .breadcrumbs button { border: 0; padding: .15rem .1rem; background: transparent; color: var(--deep); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+    .breadcrumbs__separator { color: #91a09c; }
+    .breadcrumbs__current { color: var(--muted); overflow-wrap: anywhere; }
+    .inspector__kind { color: var(--muted); font-size: .78rem; }
+    .inspector__head h3 { margin: .2rem 0 0; font-size: clamp(1.2rem, 2.5vw, 1.8rem); overflow-wrap: anywhere; }
+    .inspector__score { font-size: 2.4rem; line-height: 1; font-weight: 700; color: var(--score-color); font-variant-numeric: tabular-nums; }
+    .inspector__body { display: grid; grid-template-columns: minmax(250px, .72fr) minmax(0, 1.5fr); }
+    .inspector__summary, .inspector__children { padding: 1.2rem 1.3rem; }
+    .inspector__summary { border-right: 1px solid var(--line); }
+    .metric-table { width: 100%; border-collapse: collapse; }
+    .metric-table td { padding: .5rem 0; border-bottom: 1px solid #e5ebe9; }
+    .metric-table td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+    .metric-dot { display: inline-block; width: 8px; height: 8px; margin-right: .45rem; border-radius: 50%; background: var(--dot-color); }
+    .children-title { margin: 0 0 .7rem; font-size: .9rem; }
+    .child-list { display: grid; gap: .45rem; }
+    .child-button {
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: .8rem;
+      padding: .72rem .8rem;
+      border: 1px solid #d7e1de;
+      background: #f9fbfa;
+      text-align: left;
+      cursor: pointer;
+    }
+    .child-button:hover { border-color: #8fa8a1; }
+    .child-name { overflow-wrap: anywhere; }
+    .child-meta { display: block; margin-top: .2rem; color: var(--muted); font-size: .76rem; }
+    .child-score { font-weight: 750; font-variant-numeric: tabular-nums; }
+    .source-view { margin-bottom: 1.1rem; border: 1px solid #29443e; background: #12231f; color: #e7f0ed; }
+    .source-view__head { display: flex; justify-content: space-between; gap: 1rem; padding: .65rem .8rem; border-bottom: 1px solid #36534c; color: #bed0ca; font-size: .78rem; }
+    .source-view__head h4 { margin: 0; color: white; font-size: .88rem; }
+    .source-view pre { margin: 0; padding: .65rem 0; overflow: auto; font: .84rem/1.62 "Cascadia Code", "SFMono-Regular", Consolas, monospace; tab-size: 4; }
+    .source-line { display: grid; grid-template-columns: 4.2rem minmax(max-content, 1fr); min-height: 1.62em; padding-right: 1rem; }
+    .source-line:hover { background: #1b312b; }
+    .source-line__number { padding-right: 1rem; color: #789089; text-align: right; user-select: none; border-right: 1px solid #29443e; }
+    .source-line__code { padding-left: 1rem; white-space: pre; }
+    .source-unavailable { margin: 0 0 1rem; padding: .85rem; border: 1px dashed #b8c8c3; color: var(--muted); }
+    .criterion-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .55rem; }
+    .criteria-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: 0 0 .65rem; }
+    .criteria-head .children-title { margin: 0; }
+    .criteria-toggle {
+      border: 1px solid #9db0aa;
+      border-radius: 999px;
+      padding: .35rem .65rem;
+      background: white;
+      color: var(--deep);
+      font: inherit;
+      font-size: .76rem;
+      font-weight: 650;
+      cursor: pointer;
+    }
+    .criteria-toggle[aria-pressed="true"] { border-color: var(--deep); background: var(--deep); color: white; }
+    .criterion {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .8rem;
+      border: 1px solid var(--criterion-color);
+      border-left-width: 5px;
+      padding: .7rem .8rem;
+    }
+    .criterion--passed {
+      --criterion-color: #25836f;
+      background: #edf7f4;
+    }
+    .criterion--failed {
+      --criterion-color: #c64f48;
+      background: #fff0ed;
+    }
+    .criterion__name { font-weight: 650; overflow-wrap: anywhere; }
+    .criterion__status { flex: 0 0 auto; color: var(--criterion-color); font-size: .78rem; font-weight: 750; }
+    .empty-filter { padding: 3rem 1rem; text-align: center; color: var(--muted); }
+    .footer { max-width: 1500px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 3.5rem) 2rem; color: var(--muted); font-size: .78rem; }
+
+    @media (max-width: 850px) {
+      .overview-grid, .inspector__body { grid-template-columns: 1fr; }
+      .inspector__summary { border-right: 0; border-bottom: 1px solid var(--line); }
+      .heatmap { min-height: 430px; }
+      .rank-list { max-height: 330px; }
+      .project-heading { align-items: flex-start; flex-direction: column; }
+      .score-pair__item { text-align: left; }
+    }
+    @media (max-width: 520px) {
+      .masthead { padding-top: 2rem; }
+      .project-strip { grid-template-columns: 1fr; }
+      .project-card { min-height: 92px; }
+      .controls { position: static; }
+      .controls__spacer { display: none; }
+      .heatmap { min-height: 380px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .tile { transition: none; } }
+  </style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead__inner">
+      <h1 id="report-title"></h1>
+      <p>Find the weak terrain first. Compare projects, scan directories and files, then open any hotspot to inspect functions and criteria.</p>
+      <div class="project-strip" id="project-strip" role="tablist" aria-label="Projects"></div>
+    </div>
+  </header>
+
+  <main class="app">
+    <section class="project-heading" aria-labelledby="project-name">
+      <div>
+        <h2 id="project-name"></h2>
+        <div class="project-heading__meta" id="project-meta"></div>
+      </div>
+      <div class="score-pair" id="score-pair"></div>
+    </section>
+
+    <section class="controls" aria-label="Map controls">
+      <div class="control">
+        <label for="category">Score shown</label>
+        <select id="category"></select>
+      </div>
+      <div class="control">
+        <label>Aggregation</label>
+        <div class="segmented" id="metric-mode">
+          <button type="button" data-value="basic" aria-pressed="true">Basic</button>
+          <button type="button" data-value="weighted" aria-pressed="false">Weighted</button>
+        </div>
+      </div>
+      <div class="control">
+        <label>Map level</label>
+        <div class="segmented" id="level-mode">
+          <button type="button" data-value="files" aria-pressed="true">Files</button>
+          <button type="button" data-value="modules" aria-pressed="false">Directories</button>
+          <button type="button" data-value="functions" aria-pressed="false">Functions</button>
+        </div>
+      </div>
+      <div class="controls__spacer"></div>
+      <div class="control">
+        <label for="search">Filter map</label>
+        <input id="search" type="search" placeholder="File name">
+      </div>
+    </section>
+
+    <section class="overview-grid">
+      <div class="map-panel">
+        <div class="panel-head">
+          <div><h3>Quality map</h3><p id="map-summary"></p></div>
+          <div class="legend"><span>Needs work</span><span class="legend__bar"></span><span>Strong</span></div>
+        </div>
+        <div class="heatmap" id="heatmap"></div>
+      </div>
+      <aside class="rank-panel">
+        <div class="panel-head"><div><h3>Hotspots</h3><p>Lowest scores first</p></div></div>
+        <ol class="rank-list" id="rank-list"></ol>
+      </aside>
+    </section>
+
+    <section class="inspector" id="inspector" aria-live="polite">
+      <div class="inspector__empty">Select a map tile or hotspot to inspect it.</div>
+    </section>
+  </main>
+  <footer class="footer" id="footer"></footer>
+
+  <script id="report-data" type="application/json">{"title":"Code quality atlas","projects":[{"name":"Parse Repo","sourceFile":"/mnt/c/Users/rebek/School/F26/CS401R_F26/experiments/jev-pre-function-quality-review-experiment/results/1-parse-repo/scores.yaml","schemaVersion":"1.0","threshold":0.85,"overall":{"basic":{"score":0.752841,"passed":265,"total":352},"weighted":{"score":0.722917,"weighted_sum":21.6875,"total_weight":30},"categories":{"readability_and_naming":{"basic":{"score":0.875,"passed":77,"total":88},"weighted":{"score":0.883333,"weighted_sum":26.5,"total_weight":30}},"function_and_class_size":{"basic":{"score":0.757576,"passed":50,"total":66},"weighted":{"score":0.766667,"weighted_sum":23,"total_weight":30}},"control_flow_and_complexity":{"basic":{"score":0.897727,"passed":79,"total":88},"weighted":{"score":0.833333,"weighted_sum":25,"total_weight":30}},"duplication_and_unexplained_values":{"basic":{"score":0.515152,"passed":34,"total":66},"weighted":{"score":0.455556,"weighted_sum":13.666667,"total_weight":30}},"inputs_errors_and_reporting":{"basic":{"score":0.568182,"passed":25,"total":44},"weighted":{"score":0.516667,"weighted_sum":15.5,"total_weight":30}}}},"categories":["readability_and_naming","function_and_class_size","control_flow_and_complexity","duplication_and_unexplained_values","inputs_errors_and_reporting"],"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorableAnswer":"yes"},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorableAnswer":"yes"},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorableAnswer":"yes"},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorableAnswer":"no"},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorableAnswer":"no"},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorableAnswer":"no"},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorableAnswer":"no"},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorableAnswer":"no"},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorableAnswer":"no"},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorableAnswer":"no"},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorableAnswer":"no"},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorableAnswer":"no"},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorableAnswer":"no"},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorableAnswer":"no"},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorableAnswer":"yes"},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorableAnswer":"no"}},"modules":[{"id":".","files":["function_index.py"],"scores":{"basic":{"score":0.756579,"passed":230,"total":304},"weighted":{"score":0.722222,"weighted_sum":19.5,"total_weight":27},"categories":{"readability_and_naming":{"basic":{"score":0.855263,"passed":65,"total":76},"weighted":{"score":0.87037,"weighted_sum":23.5,"total_weight":27}},"function_and_class_size":{"basic":{"score":0.789474,"passed":45,"total":57},"weighted":{"score":0.790123,"weighted_sum":21.333333,"total_weight":27}},"control_flow_and_complexity":{"basic":{"score":0.881579,"passed":67,"total":76},"weighted":{"score":0.814815,"weighted_sum":22,"total_weight":27}},"duplication_and_unexplained_values":{"basic":{"score":0.54386,"passed":31,"total":57},"weighted":{"score":0.469136,"weighted_sum":12.666667,"total_weight":27}},"inputs_errors_and_reporting":{"basic":{"score":0.578947,"passed":22,"total":38},"weighted":{"score":0.518519,"weighted_sum":14,"total_weight":27}}}}},{"id":"tests","files":["tests/test_function_index.py"],"scores":{"basic":{"score":0.729167,"passed":35,"total":48},"weighted":{"score":0.729167,"weighted_sum":2.1875,"total_weight":3},"categories":{"readability_and_naming":{"basic":{"score":1.0,"passed":12,"total":12},"weighted":{"score":1.0,"weighted_sum":3,"total_weight":3}},"function_and_class_size":{"basic":{"score":0.555556,"passed":5,"total":9},"weighted":{"score":0.555556,"weighted_sum":1.666667,"total_weight":3}},"control_flow_and_complexity":{"basic":{"score":1.0,"passed":12,"total":12},"weighted":{"score":1.0,"weighted_sum":3,"total_weight":3}},"duplication_and_unexplained_values":{"basic":{"score":0.333333,"passed":3,"total":9},"weighted":{"score":0.333333,"weighted_sum":1,"total_weight":3}},"inputs_errors_and_reporting":{"basic":{"score":0.5,"passed":3,"total":6},"weighted":{"score":0.5,"weighted_sum":1.5,"total_weight":3}}}}}],"files":[{"id":"function_index.py","module":".","functions":["function_index.py::FunctionCollector.__init__@36","function_index.py::FunctionCollector.visit_ClassDef@44","function_index.py::FunctionCollector.visit_FunctionDef@51","function_index.py::FunctionCollector.visit_AsyncFunctionDef@54","function_index.py::FunctionCollector._visit_function@57","function_index.py::CallCollector.__init__@83","function_index.py::CallCollector.visit_Call@86","function_index.py::CallCollector.visit_FunctionDef@90","function_index.py::CallCollector.visit_AsyncFunctionDef@93","function_index.py::CallCollector.visit_ClassDef@96","function_index.py::CallCollector.visit_Lambda@99","function_index.py::iter_python_files@103","function_index.py::collect_calls@109","function_index.py::unique_symbol@116","function_index.py::resolve_call@121","function_index.py::bottom_depths@148","function_index.py::analyze@162","function_index.py::parse_args@243","function_index.py::main@250"],"scores":{"basic":{"score":0.756579,"passed":230,"total":304},"weighted":{"score":0.722222,"weighted_sum":19.5,"total_weight":27},"categories":{"readability_and_naming":{"basic":{"score":0.855263,"passed":65,"total":76},"weighted":{"score":0.87037,"weighted_sum":23.5,"total_weight":27}},"function_and_class_size":{"basic":{"score":0.789474,"passed":45,"total":57},"weighted":{"score":0.790123,"weighted_sum":21.333333,"total_weight":27}},"control_flow_and_complexity":{"basic":{"score":0.881579,"passed":67,"total":76},"weighted":{"score":0.814815,"weighted_sum":22,"total_weight":27}},"duplication_and_unexplained_values":{"basic":{"score":0.54386,"passed":31,"total":57},"weighted":{"score":0.469136,"weighted_sum":12.666667,"total_weight":27}},"inputs_errors_and_reporting":{"basic":{"score":0.578947,"passed":22,"total":38},"weighted":{"score":0.518519,"weighted_sum":14,"total_weight":27}}}}},{"id":"tests/test_function_index.py","module":"tests","functions":["tests/test_function_index.py::AnalyzeTests.test_indexes_functions_and_calculates_depths@9","tests/test_function_index.py::AnalyzeTests.test_resolves_methods_and_collapses_recursive_cycles@39","tests/test_function_index.py::AnalyzeTests.test_resolves_a_nested_function_call@61"],"scores":{"basic":{"score":0.729167,"passed":35,"total":48},"weighted":{"score":0.729167,"weighted_sum":2.1875,"total_weight":3},"categories":{"readability_and_naming":{"basic":{"score":1.0,"passed":12,"total":12},"weighted":{"score":1.0,"weighted_sum":3,"total_weight":3}},"function_and_class_size":{"basic":{"score":0.555556,"passed":5,"total":9},"weighted":{"score":0.555556,"weighted_sum":1.666667,"total_weight":3}},"control_flow_and_complexity":{"basic":{"score":1.0,"passed":12,"total":12},"weighted":{"score":1.0,"weighted_sum":3,"total_weight":3}},"duplication_and_unexplained_values":{"basic":{"score":0.333333,"passed":3,"total":9},"weighted":{"score":0.333333,"weighted_sum":1,"total_weight":3}},"inputs_errors_and_reporting":{"basic":{"score":0.5,"passed":3,"total":6},"weighted":{"score":0.5,"weighted_sum":1.5,"total_weight":3}}}}}],"functions":[{"id":"function_index.py::FunctionCollector.__init__@36","file":"function_index.py","module":".","name":"__init__","qualified_name":"FunctionCollector.__init__","line":36,"depth_to_leaf":0,"weight":1,"scores":{"basic":{"score":0.8125,"passed":13,"total":16},"weighted":{"score":0.8125,"weighted_contribution":0.8125,"weight":1},"categories":{"readability_and_naming":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"function_and_class_size":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":0.666667,"weight":1}},"control_flow_and_complexity":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"duplication_and_unexplained_values":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":0.666667,"weight":1}},"inputs_errors_and_reporting":{"basic":{"score":0.5,"passed":1,"total":2},"weighted":{"score":0.5,"weighted_contribution":0.5,"weight":1}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.97,"passed":true},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.94,"passed":true},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.85,"passed":true},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.9,"passed":true},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.94,"passed":true},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.64,"passed":false},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.9,"passed":true},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.76,"passed":false},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.92,"passed":true},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.93,"passed":true},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.8,"passed":false},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true}},"source":"def __init__(self, file: str, source: str) -> None:\n        self.file = file\n        self.source = source\n        self.functions: list[FunctionInfo] = []\n        self._names: list[str] = []\n        self._classes: list[str] = []\n        self._functions: list[str] = []","signature":"__init__(self, file: str, source: str)","end_line":42},{"id":"function_index.py::FunctionCollector.visit_ClassDef@44","file":"function_index.py","module":".","name":"visit_ClassDef","qualified_name":"FunctionCollector.visit_ClassDef","line":44,"depth_to_leaf":0,"weight":1,"scores":{"basic":{"score":0.8125,"passed":13,"total":16},"weighted":{"score":0.8125,"weighted_contribution":0.8125,"weight":1},"categories":{"readability_and_naming":{"basic":{"score":0.75,"passed":3,"total":4},"weighted":{"score":0.75,"weighted_contribution":0.75,"weight":1}},"function_and_class_size":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":0.666667,"weight":1}},"control_flow_and_complexity":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"duplication_and_unexplained_values":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":0.666667,"weight":1}},"inputs_errors_and_reporting":{"basic":{"score":1.0,"passed":2,"total":2},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.92,"passed":true},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.91,"passed":true},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.78,"passed":false},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.87,"passed":true},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.93,"passed":true},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.61,"passed":false},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.94,"passed":true},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.22,"passed":false},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.89,"passed":true},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.92,"passed":true},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.85,"passed":true},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true}},"source":"def visit_ClassDef(self, node: ast.ClassDef) -> None:\n        self._names.append(node.name)\n        self._classes.append(\".\".join(self._names))\n        self.generic_visit(node)\n        self._classes.pop()\n        self._names.pop()","signature":"visit_ClassDef(self, node: ast.ClassDef)","end_line":49},{"id":"function_index.py::FunctionCollector.visit_FunctionDef@51","file":"function_index.py","module":".","name":"visit_FunctionDef","qualified_name":"FunctionCollector.visit_FunctionDef","line":51,"depth_to_leaf":1,"weight":2,"scores":{"basic":{"score":0.8125,"passed":13,"total":16},"weighted":{"score":0.8125,"weighted_contribution":1.625,"weight":2},"categories":{"readability_and_naming":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":2.0,"weight":2}},"function_and_class_size":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":1.333334,"weight":2}},"control_flow_and_complexity":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":2.0,"weight":2}},"duplication_and_unexplained_values":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":1.333334,"weight":2}},"inputs_errors_and_reporting":{"basic":{"score":0.5,"passed":1,"total":2},"weighted":{"score":0.5,"weighted_contribution":1.0,"weight":2}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.94,"passed":true},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.94,"passed":true},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.91,"passed":true},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.94,"passed":true},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.71,"passed":false},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.32,"passed":false},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.94,"passed":true},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.91,"passed":true},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.82,"passed":false},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true}},"source":"def visit_FunctionDef(self, node: ast.FunctionDef) -> None:\n        self._visit_function(node)","signature":"visit_FunctionDef(self, node: ast.FunctionDef)","end_line":52},{"id":"function_index.py::FunctionCollector.visit_AsyncFunctionDef@54","file":"function_index.py","module":".","name":"visit_AsyncFunctionDef","qualified_name":"FunctionCollector.visit_AsyncFunctionDef","line":54,"depth_to_leaf":1,"weight":2,"scores":{"basic":{"score":0.8125,"passed":13,"total":16},"weighted":{"score":0.8125,"weighted_contribution":1.625,"weight":2},"categories":{"readability_and_naming":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":2.0,"weight":2}},"function_and_class_size":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":1.333334,"weight":2}},"control_flow_and_complexity":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":2.0,"weight":2}},"duplication_and_unexplained_values":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":1.333334,"weight":2}},"inputs_errors_and_reporting":{"basic":{"score":0.5,"passed":1,"total":2},"weighted":{"score":0.5,"weighted_contribution":1.0,"weight":2}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.96,"passed":true},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.95,"passed":true},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.91,"passed":true},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.94,"passed":true},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.7,"passed":false},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.26,"passed":false},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.9,"passed":true},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.84,"passed":false},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true}},"source":"def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:\n        self._visit_function(node)","signature":"visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef)","end_line":55},{"id":"function_index.py::FunctionCollector._visit_function@57","file":"function_index.py","module":".","name":"_visit_function","qualified_name":"FunctionCollector._visit_function","line":57,"depth_to_leaf":0,"weight":1,"scores":{"basic":{"score":0.75,"passed":12,"total":16},"weighted":{"score":0.75,"weighted_contribution":0.75,"weight":1},"categories":{"readability_and_naming":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"function_and_class_size":{"basic":{"score":0.333333,"passed":1,"total":3},"weighted":{"score":0.333333,"weighted_contribution":0.333333,"weight":1}},"control_flow_and_complexity":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"duplication_and_unexplained_values":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":0.666667,"weight":1}},"inputs_errors_and_reporting":{"basic":{"score":0.5,"passed":1,"total":2},"weighted":{"score":0.5,"weighted_contribution":0.5,"weight":1}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.87,"passed":true},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.95,"passed":true},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.85,"passed":true},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.87,"passed":true},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.71,"passed":false},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.75,"passed":false},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.89,"passed":true},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.9,"passed":true},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.41,"passed":false},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.86,"passed":true},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.87,"passed":true},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.75,"passed":false},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true}},"source":"def _visit_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:\n        self._names.append(node.name)\n        qualified_name = \".\".join(self._names)\n        function_id = f\"{self.file}::{qualified_name}@{node.lineno}\"\n        self.functions.append(\n            FunctionInfo(\n                id=function_id,\n                file=self.file,\n                name=node.name,\n                qualified_name=qualified_name,\n                line=node.lineno,\n                end_line=node.end_lineno or node.lineno,\n                signature=f\"{node.name}({ast.unparse(node.args)})\",\n                source=ast.get_source_segment(self.source, node) or \"\",\n                owner_class=self._classes[-1] if self._classes else None,\n                enclosing_functions=tuple(self._functions),\n                node=node,\n            )\n        )\n        self._functions.append(qualified_name)\n        self.generic_visit(node)\n        self._functions.pop()\n        self._names.pop()","signature":"_visit_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef)","end_line":79},{"id":"function_index.py::CallCollector.__init__@83","file":"function_index.py","module":".","name":"__init__","qualified_name":"CallCollector.__init__","line":83,"depth_to_leaf":0,"weight":1,"scores":{"basic":{"score":0.875,"passed":14,"total":16},"weighted":{"score":0.875,"weighted_contribution":0.875,"weight":1},"categories":{"readability_and_naming":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"function_and_class_size":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":0.666667,"weight":1}},"control_flow_and_complexity":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"duplication_and_unexplained_values":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":0.666667,"weight":1}},"inputs_errors_and_reporting":{"basic":{"score":1.0,"passed":2,"total":2},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.97,"passed":true},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.94,"passed":true},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.92,"passed":true},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.91,"passed":true},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.78,"passed":false},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.62,"passed":false},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.94,"passed":true},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.94,"passed":true},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.89,"passed":true},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true}},"source":"def __init__(self) -> None:\n        self.calls: list[ast.Call] = []","signature":"__init__(self)","end_line":84},{"id":"function_index.py::CallCollector.visit_Call@86","file":"function_index.py","module":".","name":"visit_Call","qualified_name":"CallCollector.visit_Call","line":86,"depth_to_leaf":0,"weight":1,"scores":{"basic":{"score":0.875,"passed":14,"total":16},"weighted":{"score":0.875,"weighted_contribution":0.875,"weight":1},"categories":{"readability_and_naming":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"function_and_class_size":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":0.666667,"weight":1}},"control_flow_and_complexity":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"duplication_and_unexplained_values":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":0.666667,"weight":1}},"inputs_errors_and_reporting":{"basic":{"score":1.0,"passed":2,"total":2},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.96,"passed":true},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.94,"passed":true},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.91,"passed":true},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.9,"passed":true},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.79,"passed":false},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.72,"passed":false},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.93,"passed":true},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.85,"passed":true},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true}},"source":"def visit_Call(self, node: ast.Call) -> None:\n        self.calls.append(node)\n        self.generic_visit(node)","signature":"visit_Call(self, node: ast.Call)","end_line":88},{"id":"function_index.py::CallCollector.visit_FunctionDef@90","file":"function_index.py","module":".","name":"visit_FunctionDef","qualified_name":"CallCollector.visit_FunctionDef","line":90,"depth_to_leaf":0,"weight":1,"scores":{"basic":{"score":0.75,"passed":12,"total":16},"weighted":{"score":0.75,"weighted_contribution":0.75,"weight":1},"categories":{"readability_and_naming":{"basic":{"score":0.5,"passed":2,"total":4},"weighted":{"score":0.5,"weighted_contribution":0.5,"weight":1}},"function_and_class_size":{"basic":{"score":1.0,"passed":3,"total":3},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"control_flow_and_complexity":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"duplication_and_unexplained_values":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":0.666667,"weight":1}},"inputs_errors_and_reporting":{"basic":{"score":0.5,"passed":1,"total":2},"weighted":{"score":0.5,"weighted_contribution":0.5,"weight":1}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.97,"passed":true},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.41,"passed":false},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.87,"passed":true},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.71,"passed":false},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.98,"passed":true},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.85,"passed":true},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.4,"passed":false},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.93,"passed":true},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.81,"passed":false},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.94,"passed":true}},"source":"def visit_FunctionDef(self, node: ast.FunctionDef) -> None:\n        return","signature":"visit_FunctionDef(self, node: ast.FunctionDef)","end_line":91},{"id":"function_index.py::CallCollector.visit_AsyncFunctionDef@93","file":"function_index.py","module":".","name":"visit_AsyncFunctionDef","qualified_name":"CallCollector.visit_AsyncFunctionDef","line":93,"depth_to_leaf":0,"weight":1,"scores":{"basic":{"score":0.6875,"passed":11,"total":16},"weighted":{"score":0.6875,"weighted_contribution":0.6875,"weight":1},"categories":{"readability_and_naming":{"basic":{"score":0.5,"passed":2,"total":4},"weighted":{"score":0.5,"weighted_contribution":0.5,"weight":1}},"function_and_class_size":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":0.666667,"weight":1}},"control_flow_and_complexity":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"duplication_and_unexplained_values":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":0.666667,"weight":1}},"inputs_errors_and_reporting":{"basic":{"score":0.5,"passed":1,"total":2},"weighted":{"score":0.5,"weighted_contribution":0.5,"weight":1}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.97,"passed":true},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.51,"passed":false},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.89,"passed":true},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.56,"passed":false},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.98,"passed":true},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.84,"passed":false},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.34,"passed":false},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.93,"passed":true},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.82,"passed":false},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true}},"source":"def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:\n        return","signature":"visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef)","end_line":94},{"id":"function_index.py::CallCollector.visit_ClassDef@96","file":"function_index.py","module":".","name":"visit_ClassDef","qualified_name":"CallCollector.visit_ClassDef","line":96,"depth_to_leaf":0,"weight":1,"scores":{"basic":{"score":0.8125,"passed":13,"total":16},"weighted":{"score":0.8125,"weighted_contribution":0.8125,"weight":1},"categories":{"readability_and_naming":{"basic":{"score":0.5,"passed":2,"total":4},"weighted":{"score":0.5,"weighted_contribution":0.5,"weight":1}},"function_and_class_size":{"basic":{"score":1.0,"passed":3,"total":3},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"control_flow_and_complexity":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"duplication_and_unexplained_values":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":0.666667,"weight":1}},"inputs_errors_and_reporting":{"basic":{"score":1.0,"passed":2,"total":2},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.97,"passed":true},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.51,"passed":false},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.88,"passed":true},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.71,"passed":false},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.98,"passed":true},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.86,"passed":true},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.39,"passed":false},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.92,"passed":true},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.85,"passed":true},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.94,"passed":true}},"source":"def visit_ClassDef(self, node: ast.ClassDef) -> None:\n        return","signature":"visit_ClassDef(self, node: ast.ClassDef)","end_line":97},{"id":"function_index.py::CallCollector.visit_Lambda@99","file":"function_index.py","module":".","name":"visit_Lambda","qualified_name":"CallCollector.visit_Lambda","line":99,"depth_to_leaf":0,"weight":1,"scores":{"basic":{"score":0.75,"passed":12,"total":16},"weighted":{"score":0.75,"weighted_contribution":0.75,"weight":1},"categories":{"readability_and_naming":{"basic":{"score":0.75,"passed":3,"total":4},"weighted":{"score":0.75,"weighted_contribution":0.75,"weight":1}},"function_and_class_size":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":0.666667,"weight":1}},"control_flow_and_complexity":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"duplication_and_unexplained_values":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":0.666667,"weight":1}},"inputs_errors_and_reporting":{"basic":{"score":0.5,"passed":1,"total":2},"weighted":{"score":0.5,"weighted_contribution":0.5,"weight":1}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.97,"passed":true},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.73,"passed":false},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.88,"passed":true},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.89,"passed":true},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.98,"passed":true},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.84,"passed":false},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.34,"passed":false},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.93,"passed":true},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.84,"passed":false},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true}},"source":"def visit_Lambda(self, node: ast.Lambda) -> None:\n        return","signature":"visit_Lambda(self, node: ast.Lambda)","end_line":100},{"id":"function_index.py::iter_python_files@103","file":"function_index.py","module":".","name":"iter_python_files","qualified_name":"iter_python_files","line":103,"depth_to_leaf":0,"weight":1,"scores":{"basic":{"score":0.6875,"passed":11,"total":16},"weighted":{"score":0.6875,"weighted_contribution":0.6875,"weight":1},"categories":{"readability_and_naming":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"function_and_class_size":{"basic":{"score":1.0,"passed":3,"total":3},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"control_flow_and_complexity":{"basic":{"score":0.5,"passed":2,"total":4},"weighted":{"score":0.5,"weighted_contribution":0.5,"weight":1}},"duplication_and_unexplained_values":{"basic":{"score":0.333333,"passed":1,"total":3},"weighted":{"score":0.333333,"weighted_contribution":0.333333,"weight":1}},"inputs_errors_and_reporting":{"basic":{"score":0.5,"passed":1,"total":2},"weighted":{"score":0.5,"weighted_contribution":0.5,"weight":1}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.88,"passed":true},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.97,"passed":true},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.87,"passed":true},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.89,"passed":true},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.94,"passed":true},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.78,"passed":false},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.43,"passed":false},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.85,"passed":true},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.85,"passed":true},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.78,"passed":false},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.74,"passed":false},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.77,"passed":false},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true}},"source":"def iter_python_files(root: Path) -> Iterable[Path]:\n    for path in sorted(root.rglob(\"*.py\")):\n        if not any(part in EXCLUDED_DIRECTORIES or part.startswith(\".\") for part in path.relative_to(root).parts):\n            yield path","signature":"iter_python_files(root: Path)","end_line":106},{"id":"function_index.py::collect_calls@109","file":"function_index.py","module":".","name":"collect_calls","qualified_name":"collect_calls","line":109,"depth_to_leaf":0,"weight":1,"scores":{"basic":{"score":0.875,"passed":14,"total":16},"weighted":{"score":0.875,"weighted_contribution":0.875,"weight":1},"categories":{"readability_and_naming":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"function_and_class_size":{"basic":{"score":1.0,"passed":3,"total":3},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"control_flow_and_complexity":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"duplication_and_unexplained_values":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":0.666667,"weight":1}},"inputs_errors_and_reporting":{"basic":{"score":0.5,"passed":1,"total":2},"weighted":{"score":0.5,"weighted_contribution":0.5,"weight":1}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.94,"passed":true},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.95,"passed":true},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.9,"passed":true},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.89,"passed":true},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.94,"passed":true},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.91,"passed":true},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.94,"passed":true},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.7,"passed":false},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.92,"passed":true},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.77,"passed":false},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true}},"source":"def collect_calls(nodes: Iterable[ast.stmt]) -> list[ast.Call]:\n    collector = CallCollector()\n    for node in nodes:\n        collector.visit(node)\n    return collector.calls","signature":"collect_calls(nodes: Iterable[ast.stmt])","end_line":113},{"id":"function_index.py::unique_symbol@116","file":"function_index.py","module":".","name":"unique_symbol","qualified_name":"unique_symbol","line":116,"depth_to_leaf":0,"weight":1,"scores":{"basic":{"score":0.8125,"passed":13,"total":16},"weighted":{"score":0.8125,"weighted_contribution":0.8125,"weight":1},"categories":{"readability_and_naming":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"function_and_class_size":{"basic":{"score":1.0,"passed":3,"total":3},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"control_flow_and_complexity":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"duplication_and_unexplained_values":{"basic":{"score":0.333333,"passed":1,"total":3},"weighted":{"score":0.333333,"weighted_contribution":0.333333,"weight":1}},"inputs_errors_and_reporting":{"basic":{"score":0.5,"passed":1,"total":2},"weighted":{"score":0.5,"weighted_contribution":0.5,"weight":1}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.96,"passed":true},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.95,"passed":true},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.88,"passed":true},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.89,"passed":true},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.91,"passed":true},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.9,"passed":true},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.8,"passed":false},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.86,"passed":true},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.7,"passed":false},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.79,"passed":false},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true}},"source":"def unique_symbol(symbols: dict[str, list[FunctionInfo]], name: str) -> FunctionInfo | None:\n    matches = symbols.get(name, [])\n    return matches[0] if len(matches) == 1 else None","signature":"unique_symbol(symbols: dict[str, list[FunctionInfo]], name: str)","end_line":118},{"id":"function_index.py::resolve_call@121","file":"function_index.py","module":".","name":"resolve_call","qualified_name":"resolve_call","line":121,"depth_to_leaf":1,"weight":2,"scores":{"basic":{"score":0.5,"passed":8,"total":16},"weighted":{"score":0.5,"weighted_contribution":1.0,"weight":2},"categories":{"readability_and_naming":{"basic":{"score":0.75,"passed":3,"total":4},"weighted":{"score":0.75,"weighted_contribution":1.5,"weight":2}},"function_and_class_size":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":1.333334,"weight":2}},"control_flow_and_complexity":{"basic":{"score":0.5,"passed":2,"total":4},"weighted":{"score":0.5,"weighted_contribution":1.0,"weight":2}},"duplication_and_unexplained_values":{"basic":{"score":0.0,"passed":0,"total":3},"weighted":{"score":0.0,"weighted_contribution":0.0,"weight":2}},"inputs_errors_and_reporting":{"basic":{"score":0.5,"passed":1,"total":2},"weighted":{"score":0.5,"weighted_contribution":1.0,"weight":2}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.84,"passed":false},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.94,"passed":true},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.88,"passed":true},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.9,"passed":true},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.87,"passed":true},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.84,"passed":false},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.78,"passed":false},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.12,"passed":false},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.92,"passed":true},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.92,"passed":true},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.73,"passed":false},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.8,"passed":false},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.66,"passed":false},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.77,"passed":false},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true}},"source":"def resolve_call(\n    call: ast.Call,\n    caller: FunctionInfo | None,\n    symbols: dict[str, list[FunctionInfo]],\n) -> FunctionInfo | None:\n    target = call.func\n    if isinstance(target, ast.Name):\n        if caller is not None:\n            scopes = (*caller.enclosing_functions, caller.qualified_name)\n            for enclosing in reversed(scopes):\n                match = unique_symbol(symbols, f\"{enclosing}.{target.id}\")\n                if match is not None:\n                    return match\n        return unique_symbol(symbols, target.id)\n\n    if (\n        caller is not None\n        and caller.owner_class is not None\n        and isinstance(target, ast.Attribute)\n        and isinstance(target.value, ast.Name)\n        and target.value.id in {\"self\", \"cls\"}\n    ):\n        return unique_symbol(symbols, f\"{caller.owner_class}.{target.attr}\")\n\n    return None","signature":"resolve_call(call: ast.Call, caller: FunctionInfo | None, symbols: dict[str, list[FunctionInfo]])","end_line":145},{"id":"function_index.py::bottom_depths@148","file":"function_index.py","module":".","name":"bottom_depths","qualified_name":"bottom_depths","line":148,"depth_to_leaf":0,"weight":1,"scores":{"basic":{"score":0.6875,"passed":11,"total":16},"weighted":{"score":0.6875,"weighted_contribution":0.6875,"weight":1},"categories":{"readability_and_naming":{"basic":{"score":0.75,"passed":3,"total":4},"weighted":{"score":0.75,"weighted_contribution":0.75,"weight":1}},"function_and_class_size":{"basic":{"score":1.0,"passed":3,"total":3},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"control_flow_and_complexity":{"basic":{"score":0.75,"passed":3,"total":4},"weighted":{"score":0.75,"weighted_contribution":0.75,"weight":1}},"duplication_and_unexplained_values":{"basic":{"score":0.333333,"passed":1,"total":3},"weighted":{"score":0.333333,"weighted_contribution":0.333333,"weight":1}},"inputs_errors_and_reporting":{"basic":{"score":0.5,"passed":1,"total":2},"weighted":{"score":0.5,"weighted_contribution":0.5,"weight":1}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.79,"passed":false},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.93,"passed":true},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.86,"passed":true},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.86,"passed":true},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.85,"passed":true},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.84,"passed":false},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.9,"passed":true},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.93,"passed":true},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.85,"passed":true},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.91,"passed":true},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.78,"passed":false},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.62,"passed":false},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.73,"passed":false},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true}},"source":"def bottom_depths(graph: nx.DiGraph) -> dict[str, int]:\n    if not graph:\n        return {}\n    condensed = nx.condensation(graph)\n    component_depth: dict[int, int] = {}\n    for component in reversed(list(nx.topological_sort(condensed))):\n        children = list(condensed.successors(component))\n        component_depth[component] = 0 if not children else 1 + max(component_depth[child] for child in children)\n    return {\n        function_id: component_depth[component]\n        for function_id, component in condensed.graph[\"mapping\"].items()\n    }","signature":"bottom_depths(graph: nx.DiGraph)","end_line":159},{"id":"function_index.py::analyze@162","file":"function_index.py","module":".","name":"analyze","qualified_name":"analyze","line":162,"depth_to_leaf":2,"weight":3,"scores":{"basic":{"score":0.375,"passed":6,"total":16},"weighted":{"score":0.375,"weighted_contribution":1.125,"weight":3},"categories":{"readability_and_naming":{"basic":{"score":0.75,"passed":3,"total":4},"weighted":{"score":0.75,"weighted_contribution":2.25,"weight":3}},"function_and_class_size":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":2.000001,"weight":3}},"control_flow_and_complexity":{"basic":{"score":0.25,"passed":1,"total":4},"weighted":{"score":0.25,"weighted_contribution":0.75,"weight":3}},"duplication_and_unexplained_values":{"basic":{"score":0.0,"passed":0,"total":3},"weighted":{"score":0.0,"weighted_contribution":0.0,"weight":3}},"inputs_errors_and_reporting":{"basic":{"score":0.0,"passed":0,"total":2},"weighted":{"score":0.0,"weighted_contribution":0.0,"weight":3}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.75,"passed":false},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.92,"passed":true},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.9,"passed":true},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.89,"passed":true},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.12,"passed":false},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.45,"passed":false},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.47,"passed":false},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.94,"passed":true},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.81,"passed":false},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.79,"passed":false},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.75,"passed":false},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.49,"passed":false},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.8,"passed":false},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.72,"passed":false}},"source":"def analyze(root: Path) -> dict[str, object]:\n    root = root.resolve()\n    if not root.is_dir():\n        raise ValueError(f\"not a directory: {root}\")\n\n    functions: list[FunctionInfo] = []\n    modules: list[tuple[str, ast.Module]] = []\n    errors: list[dict[str, object]] = []\n\n    for path in iter_python_files(root):\n        relative_path = path.relative_to(root).as_posix()\n        try:\n            source = path.read_text(encoding=\"utf-8\")\n            tree = ast.parse(source, filename=relative_path)\n        except (OSError, UnicodeError, SyntaxError) as error:\n            errors.append({\"file\": relative_path, \"error\": str(error)})\n            continue\n        collector = FunctionCollector(relative_path, source)\n        collector.visit(tree)\n        functions.extend(collector.functions)\n        modules.append((relative_path, tree))\n\n    symbols_by_file: dict[str, dict[str, list[FunctionInfo]]] = {}\n    for function in functions:\n        file_symbols = symbols_by_file.setdefault(function.file, {})\n        file_symbols.setdefault(function.qualified_name, []).append(function)\n\n    graph = nx.DiGraph()\n    graph.add_nodes_from(function.id for function in functions)\n    calls_by_function: dict[str, set[str]] = {function.id: set() for function in functions}\n    entry_points: set[str] = set()\n\n    for function in functions:\n        symbols = symbols_by_file[function.file]\n        for call in collect_calls(function.node.body):\n            target = resolve_call(call, function, symbols)\n            if target is not None:\n                graph.add_edge(function.id, target.id)\n                calls_by_function[function.id].add(target.id)\n\n    for file, tree in modules:\n        symbols = symbols_by_file.get(file, {})\n        for call in collect_calls(tree.body):\n            target = resolve_call(call, None, symbols)\n            if target is not None:\n                entry_points.add(target.id)\n\n    entry_depths = (\n        nx.multi_source_dijkstra_path_length(graph, entry_points, weight=None)\n        if entry_points\n        else {}\n    )\n    leaf_depths = bottom_depths(graph)\n\n    records = []\n    for function in sorted(functions, key=lambda item: (item.file, item.line, item.qualified_name)):\n        records.append(\n            {\n                \"id\": function.id,\n                \"file\": function.file,\n                \"name\": function.name,\n                \"qualified_name\": function.qualified_name,\n                \"line\": function.line,\n                \"end_line\": function.end_line,\n                \"signature\": function.signature,\n                \"source\": function.source,\n                \"calls\": sorted(calls_by_function[function.id]),\n                \"depth_from_entry\": entry_depths.get(function.id),\n                \"depth_to_leaf\": leaf_depths[function.id],\n            }\n        )\n\n    return {\n        \"schema_version\": SCHEMA_VERSION,\n        \"root\": str(root),\n        \"entry_points\": sorted(entry_points),\n        \"functions\": records,\n        \"errors\": errors,\n    }","signature":"analyze(root: Path)","end_line":240},{"id":"function_index.py::parse_args@243","file":"function_index.py","module":".","name":"parse_args","qualified_name":"parse_args","line":243,"depth_to_leaf":0,"weight":1,"scores":{"basic":{"score":0.9375,"passed":15,"total":16},"weighted":{"score":0.9375,"weighted_contribution":0.9375,"weight":1},"categories":{"readability_and_naming":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"function_and_class_size":{"basic":{"score":1.0,"passed":3,"total":3},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"control_flow_and_complexity":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"duplication_and_unexplained_values":{"basic":{"score":1.0,"passed":3,"total":3},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"inputs_errors_and_reporting":{"basic":{"score":0.5,"passed":1,"total":2},"weighted":{"score":0.5,"weighted_contribution":0.5,"weight":1}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.97,"passed":true},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.97,"passed":true},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.93,"passed":true},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.9,"passed":true},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.89,"passed":true},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.93,"passed":true},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.9,"passed":true},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.94,"passed":true},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.79,"passed":false},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true}},"source":"def parse_args() -> argparse.Namespace:\n    parser = argparse.ArgumentParser(description=__doc__)\n    parser.add_argument(\"directory\", type=Path, help=\"local Python repository or directory\")\n    parser.add_argument(\"-o\", \"--output\", type=Path, help=\"write JSON to this file instead of stdout\")\n    return parser.parse_args()","signature":"parse_args()","end_line":247},{"id":"function_index.py::main@250","file":"function_index.py","module":".","name":"main","qualified_name":"main","line":250,"depth_to_leaf":3,"weight":4,"scores":{"basic":{"score":0.75,"passed":12,"total":16},"weighted":{"score":0.75,"weighted_contribution":3.0,"weight":4},"categories":{"readability_and_naming":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":4.0,"weight":4}},"function_and_class_size":{"basic":{"score":1.0,"passed":3,"total":3},"weighted":{"score":1.0,"weighted_contribution":4.0,"weight":4}},"control_flow_and_complexity":{"basic":{"score":0.75,"passed":3,"total":4},"weighted":{"score":0.75,"weighted_contribution":3.0,"weight":4}},"duplication_and_unexplained_values":{"basic":{"score":0.333333,"passed":1,"total":3},"weighted":{"score":0.333333,"weighted_contribution":1.333332,"weight":4}},"inputs_errors_and_reporting":{"basic":{"score":0.5,"passed":1,"total":2},"weighted":{"score":0.5,"weighted_contribution":2.0,"weight":4}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.94,"passed":true},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.93,"passed":true},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.86,"passed":true},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.9,"passed":true},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.86,"passed":true},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.93,"passed":true},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.93,"passed":true},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.64,"passed":false},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.91,"passed":true},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.9,"passed":true},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.79,"passed":false},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.72,"passed":false},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.79,"passed":false},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.9,"passed":true}},"source":"def main() -> None:\n    args = parse_args()\n    result = analyze(args.directory)\n    encoded = json.dumps(result, indent=2, ensure_ascii=False) + \"\\n\"\n    if args.output:\n        args.output.write_text(encoded, encoding=\"utf-8\")\n    else:\n        print(encoded, end=\"\")","signature":"main()","end_line":257},{"id":"tests/test_function_index.py::AnalyzeTests.test_indexes_functions_and_calculates_depths@9","file":"tests/test_function_index.py","module":"tests","name":"test_indexes_functions_and_calculates_depths","qualified_name":"AnalyzeTests.test_indexes_functions_and_calculates_depths","line":9,"depth_to_leaf":0,"weight":1,"scores":{"basic":{"score":0.6875,"passed":11,"total":16},"weighted":{"score":0.6875,"weighted_contribution":0.6875,"weight":1},"categories":{"readability_and_naming":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"function_and_class_size":{"basic":{"score":0.333333,"passed":1,"total":3},"weighted":{"score":0.333333,"weighted_contribution":0.333333,"weight":1}},"control_flow_and_complexity":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"duplication_and_unexplained_values":{"basic":{"score":0.333333,"passed":1,"total":3},"weighted":{"score":0.333333,"weighted_contribution":0.333333,"weight":1}},"inputs_errors_and_reporting":{"basic":{"score":0.5,"passed":1,"total":2},"weighted":{"score":0.5,"weighted_contribution":0.5,"weight":1}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.9,"passed":true},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.95,"passed":true},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.89,"passed":true},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.92,"passed":true},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.72,"passed":false},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.81,"passed":false},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.93,"passed":true},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.26,"passed":false},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.8,"passed":false},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.92,"passed":true},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.81,"passed":false},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true}},"source":"def test_indexes_functions_and_calculates_depths(self):\n        source = \"\"\"\\\ndef main():\n    middle()\n\ndef middle():\n    leaf()\n\ndef leaf():\n    return 1\n\nif __name__ == \"__main__\":\n    main()\n\"\"\"\n        with tempfile.TemporaryDirectory() as directory:\n            root = Path(directory)\n            (root / \"app.py\").write_text(source, encoding=\"utf-8\")\n\n            result = analyze(root)\n\n        functions = {item[\"name\"]: item for item in result[\"functions\"]}\n        self.assertEqual(result[\"entry_points\"], [functions[\"main\"][\"id\"]])\n        self.assertEqual(functions[\"main\"][\"depth_from_entry\"], 0)\n        self.assertEqual(functions[\"middle\"][\"depth_from_entry\"], 1)\n        self.assertEqual(functions[\"leaf\"][\"depth_from_entry\"], 2)\n        self.assertEqual(functions[\"main\"][\"depth_to_leaf\"], 2)\n        self.assertEqual(functions[\"middle\"][\"depth_to_leaf\"], 1)\n        self.assertEqual(functions[\"leaf\"][\"depth_to_leaf\"], 0)\n        self.assertIn(\"def leaf():\", functions[\"leaf\"][\"source\"])","signature":"test_indexes_functions_and_calculates_depths(self)","end_line":37},{"id":"tests/test_function_index.py::AnalyzeTests.test_resolves_methods_and_collapses_recursive_cycles@39","file":"tests/test_function_index.py","module":"tests","name":"test_resolves_methods_and_collapses_recursive_cycles","qualified_name":"AnalyzeTests.test_resolves_methods_and_collapses_recursive_cycles","line":39,"depth_to_leaf":0,"weight":1,"scores":{"basic":{"score":0.75,"passed":12,"total":16},"weighted":{"score":0.75,"weighted_contribution":0.75,"weight":1},"categories":{"readability_and_naming":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"function_and_class_size":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":0.666667,"weight":1}},"control_flow_and_complexity":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"duplication_and_unexplained_values":{"basic":{"score":0.333333,"passed":1,"total":3},"weighted":{"score":0.333333,"weighted_contribution":0.333333,"weight":1}},"inputs_errors_and_reporting":{"basic":{"score":0.5,"passed":1,"total":2},"weighted":{"score":0.5,"weighted_contribution":0.5,"weight":1}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.89,"passed":true},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.94,"passed":true},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.86,"passed":true},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.91,"passed":true},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.85,"passed":true},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.84,"passed":false},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.97,"passed":true},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.94,"passed":true},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.24,"passed":false},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.79,"passed":false},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.92,"passed":true},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.83,"passed":false},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true}},"source":"def test_resolves_methods_and_collapses_recursive_cycles(self):\n        source = \"\"\"\\\nclass Worker:\n    def start(self):\n        self.loop()\n\n    def loop(self):\n        self.loop()\n\nWorker().start()\n\"\"\"\n        with tempfile.TemporaryDirectory() as directory:\n            root = Path(directory)\n            (root / \"worker.py\").write_text(source, encoding=\"utf-8\")\n\n            result = analyze(root)\n\n        functions = {item[\"name\"]: item for item in result[\"functions\"]}\n        self.assertEqual(functions[\"start\"][\"calls\"], [functions[\"loop\"][\"id\"]])\n        self.assertEqual(functions[\"loop\"][\"calls\"], [functions[\"loop\"][\"id\"]])\n        self.assertEqual(functions[\"loop\"][\"depth_to_leaf\"], 0)","signature":"test_resolves_methods_and_collapses_recursive_cycles(self)","end_line":59},{"id":"tests/test_function_index.py::AnalyzeTests.test_resolves_a_nested_function_call@61","file":"tests/test_function_index.py","module":"tests","name":"test_resolves_a_nested_function_call","qualified_name":"AnalyzeTests.test_resolves_a_nested_function_call","line":61,"depth_to_leaf":0,"weight":1,"scores":{"basic":{"score":0.75,"passed":12,"total":16},"weighted":{"score":0.75,"weighted_contribution":0.75,"weight":1},"categories":{"readability_and_naming":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"function_and_class_size":{"basic":{"score":0.666667,"passed":2,"total":3},"weighted":{"score":0.666667,"weighted_contribution":0.666667,"weight":1}},"control_flow_and_complexity":{"basic":{"score":1.0,"passed":4,"total":4},"weighted":{"score":1.0,"weighted_contribution":1.0,"weight":1}},"duplication_and_unexplained_values":{"basic":{"score":0.333333,"passed":1,"total":3},"weighted":{"score":0.333333,"weighted_contribution":0.333333,"weight":1}},"inputs_errors_and_reporting":{"basic":{"score":0.5,"passed":1,"total":2},"weighted":{"score":0.5,"weighted_contribution":0.5,"weight":1}}}},"criteria":{"easy_to_follow":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.9,"passed":true},"purpose_is_apparent":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.94,"passed":true},"names_are_descriptive":{"category":"readability_and_naming","polarity":"positive","favorable_answer":"yes","favorable_probability":0.89,"passed":true},"inconsistent_naming":{"category":"readability_and_naming","polarity":"negative","favorable_answer":"no","favorable_probability":0.9,"passed":true},"unusually_long_or_many_steps":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.87,"passed":true},"owning_class_is_large":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.84,"passed":false},"long_parameter_list":{"category":"function_and_class_size","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"excessive_nesting":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true},"complex_conditionals":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"flag_argument":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"message_chain":{"category":"control_flow_and_complexity","polarity":"negative","favorable_answer":"no","favorable_probability":0.95,"passed":true},"duplicated_code":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.18,"passed":false},"magic_values":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.79,"passed":false},"repeated_conditionals":{"category":"duplication_and_unexplained_values","polarity":"negative","favorable_answer":"no","favorable_probability":0.93,"passed":true},"appropriate_error_handling":{"category":"inputs_errors_and_reporting","polarity":"positive","favorable_answer":"yes","favorable_probability":0.8,"passed":false},"broad_or_silent_exception_handling":{"category":"inputs_errors_and_reporting","polarity":"negative","favorable_answer":"no","favorable_probability":0.96,"passed":true}},"source":"def test_resolves_a_nested_function_call(self):\n        source = \"\"\"\\\ndef outer():\n    def inner():\n        return 1\n    return inner()\n\nouter()\n\"\"\"\n        with tempfile.TemporaryDirectory() as directory:\n            root = Path(directory)\n            (root / \"nested.py\").write_text(source, encoding=\"utf-8\")\n\n            result = analyze(root)\n\n        functions = {item[\"name\"]: item for item in result[\"functions\"]}\n        self.assertEqual(functions[\"outer\"][\"calls\"], [functions[\"inner\"][\"id\"]])\n        self.assertEqual(functions[\"inner\"][\"depth_from_entry\"], 1)","signature":"test_resolves_a_nested_function_call(self)","end_line":78}]}]}</script>
+  <script>
+    (() => {
+      "use strict";
+      const report = JSON.parse(document.getElementById("report-data").textContent);
+      const state = { project: 0, category: "overall", metric: "basic", level: "files", query: "", selected: null, showCriterionPercentages: false };
+      const elements = Object.fromEntries([
+        "project-strip", "project-name", "project-meta", "score-pair", "category", "metric-mode",
+        "level-mode", "search", "map-summary", "heatmap", "rank-list", "inspector", "footer"
+      ].map(id => [id, document.getElementById(id)]));
+
+      document.getElementById("report-title").textContent = report.title;
+
+      const label = value => String(value).replaceAll("_", " ").replace(/\b\w/g, char => char.toUpperCase());
+      const percent = value => Number.isFinite(value) ? `${Math.round(value * 100)}%` : "—";
+      const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      })[char]);
+      const project = () => report.projects[state.project];
+
+      function scoreBlock(entity, category = state.category, metric = state.metric) {
+        const scores = entity?.scores || entity;
+        const container = category === "overall" ? scores : scores?.categories?.[category];
+        return container?.[metric] || container?.basic || null;
+      }
+      const score = entity => scoreBlock(entity)?.score;
+
+      function scoreColor(value) {
+        if (!Number.isFinite(value)) return "#9aa9a5";
+        const stops = value < .5
+          ? [[198,79,72], [217,170,67], value / .5]
+          : [[217,170,67], [37,131,111], (value - .5) / .5];
+        const mixed = stops[0].map((channel, index) => Math.round(channel + (stops[1][index] - channel) * stops[2]));
+        return `rgb(${mixed.join(",")})`;
+      }
+      const scoreInk = value => value > .42 && value < .79 ? "#172522" : "#ffffff";
+      const scoreText = value => value < .5 ? "#9d3732" : value < .78 ? "#75540b" : "#176353";
+
+      function setSegment(container, value) {
+        container.querySelectorAll("button").forEach(button => {
+          button.setAttribute("aria-pressed", String(button.dataset.value === value));
+        });
+      }
+
+      function renderProjectStrip() {
+        elements["project-strip"].innerHTML = report.projects.map((item, index) => {
+          const value = item.overall.basic.score;
+          return `<button class="project-card" role="tab" aria-selected="${index === state.project}"
+            data-project="${index}" style="--score-color:${scoreColor(value)}">
+            <span class="project-card__name">${escapeHtml(item.name)}</span>
+            <span class="project-card__score">${percent(value)}</span>
+            <span class="project-card__meta">${item.files.length} files · ${item.functions.length} functions</span>
+          </button>`;
+        }).join("");
+      }
+
+      function renderProject() {
+        const item = project();
+        elements["project-name"].textContent = item.name;
+        elements["project-meta"].textContent = `${item.files.length} files · ${item.functions.length} functions · schema ${item.schemaVersion}`;
+        elements["score-pair"].innerHTML = ["basic", "weighted"].map(metric => {
+          const value = item.overall[metric]?.score;
+          return `<div class="score-pair__item"><span class="score-pair__value">${percent(value)}</span><span class="score-pair__label">${label(metric)} score</span></div>`;
+        }).join("");
+        elements.category.innerHTML = `<option value="overall">Overall score</option>` + item.categories
+          .map(category => `<option value="${escapeHtml(category)}">${escapeHtml(label(category))}</option>`).join("");
+        if (!item.categories.includes(state.category)) state.category = "overall";
+        elements.category.value = state.category;
+        elements.footer.textContent = `Generated from ${item.sourceFile}`;
+        renderMap();
+      }
+
+      function visibleEntities() {
+        const items = project()[state.level] || [];
+        const query = state.query.trim().toLowerCase();
+        return items.filter(item => !query || item.id.toLowerCase().includes(query));
+      }
+
+      function partition(items, x, y, width, height, depth = 0) {
+        if (!items.length) return [];
+        if (items.length === 1) return [{ item: items[0], x, y, width, height }];
+        const weighted = items.map(item => ({ item, weight: Math.max(1, scoreBlock(item)?.total || item.functions?.length || item.files?.length || 1) }));
+        const total = weighted.reduce((sum, entry) => sum + entry.weight, 0);
+        let split = 1;
+        let firstWeight = weighted[0].weight;
+        let bestDifference = Math.abs(total - (firstWeight * 2));
+        for (let index = 1; index < weighted.length - 1; index += 1) {
+          firstWeight += weighted[index].weight;
+          const difference = Math.abs(total - (firstWeight * 2));
+          if (difference < bestDifference) {
+            bestDifference = difference;
+            split = index + 1;
+          }
+        }
+        const first = weighted.slice(0, split).map(entry => entry.item);
+        const second = weighted.slice(split).map(entry => entry.item);
+        firstWeight = weighted.slice(0, split).reduce((sum, entry) => sum + entry.weight, 0);
+        const ratio = firstWeight / total;
+        const vertical = width >= height;
+        if (vertical) {
+          const firstWidth = width * ratio;
+          return [...partition(first, x, y, firstWidth, height, depth + 1), ...partition(second, x + firstWidth, y, width - firstWidth, height, depth + 1)];
+        }
+        const firstHeight = height * ratio;
+        return [...partition(first, x, y, width, firstHeight, depth + 1), ...partition(second, x, y + firstHeight, width, height - firstHeight, depth + 1)];
+      }
+
+      function renderMap() {
+        const items = visibleEntities().filter(item => Number.isFinite(score(item))).sort((a, b) => score(a) - score(b));
+        const values = items.map(score).sort((a, b) => a - b);
+        const median = values.length ? values[Math.floor(values.length / 2)] : NaN;
+        const categoryText = state.category === "overall" ? "overall quality" : label(state.category);
+        elements["map-summary"].textContent = `${items.length} ${state.level} · ${categoryText} · median ${percent(median)}`;
+        if (!items.length) {
+          elements.heatmap.innerHTML = `<div class="empty-filter">No scored ${state.level} match this filter.</div>`;
+          elements["rank-list"].innerHTML = "";
+          return;
+        }
+        const width = elements.heatmap.clientWidth || 900;
+        const height = elements.heatmap.clientHeight || 520;
+        const rectangles = partition(items, 0, 0, width, height);
+        elements.heatmap.innerHTML = rectangles.map(({ item, x, y, width: tileWidth, height: tileHeight }) => {
+          const value = score(item);
+          const delta = value - median;
+          const sizeClass = tileWidth < 95 || tileHeight < 58 ? "tile--micro" : tileWidth < 160 || tileHeight < 90 ? "tile--tiny" : "";
+          const relative = Math.abs(delta) < .005 ? "at median" : `${Math.abs(Math.round(delta * 100))} pts ${delta > 0 ? "above" : "below"} median`;
+          return `<button class="tile ${sizeClass}" data-entity="${escapeHtml(item.id)}"
+            style="left:${x}px;top:${y}px;width:${tileWidth}px;height:${tileHeight}px;--tile-color:${scoreColor(value)};--tile-ink:${scoreInk(value)}"
+            title="${escapeHtml(item.id)}: ${percent(value)}, ${relative}">
+            <span class="tile__name">${escapeHtml(item.id)}</span><span class="tile__score">${percent(value)}</span><span class="tile__delta">${relative}</span>
+          </button>`;
+        }).join("");
+        elements["rank-list"].innerHTML = items.map((item, index) => `<li class="rank-item"><button data-entity="${escapeHtml(item.id)}">
+          <span class="rank-item__index">${String(index + 1).padStart(2, "0")}</span><span class="rank-item__name">${escapeHtml(item.id)}</span>
+          <span class="rank-item__score" style="color:${scoreText(score(item))}">${percent(score(item))}</span>
+        </button></li>`).join("");
+      }
+
+      function entityById(id) {
+        return project()[state.level].find(item => item.id === id);
+      }
+
+      function kindForLevel(level) {
+        return level === "functions" ? "function" : level === "files" ? "file" : "directory";
+      }
+
+      function collectionForKind(kind) {
+        return kind === "function" ? project().functions : kind === "file" ? project().files : project().modules;
+      }
+
+      function entityForKind(id, kind) {
+        return collectionForKind(kind).find(item => item.id === id);
+      }
+
+      function breadcrumbItems(entity, kind) {
+        const items = [{ label: project().name, action: "home" }];
+        if (kind === "directory") {
+          items.push({ label: entity.id, current: true });
+          return items;
+        }
+        const moduleId = entity.module;
+        const module = moduleId == null ? null : entityForKind(moduleId, "directory");
+        if (module) items.push({ label: module.id === "." ? "Repository root" : module.id, id: module.id, kind: "directory" });
+        if (kind === "function") {
+          const file = entityForKind(entity.file, "file");
+          if (file) items.push({ label: file.id, id: file.id, kind: "file" });
+        }
+        items.push({ label: kind === "function" ? entity.qualified_name || entity.name : entity.id, current: true });
+        return items;
+      }
+
+      function breadcrumbs(entity, kind) {
+        return `<nav class="breadcrumbs" aria-label="Selection path">${breadcrumbItems(entity, kind).map((item, index) => {
+          const separator = index ? `<span class="breadcrumbs__separator" aria-hidden="true">/</span>` : "";
+          if (item.current) return `${separator}<span class="breadcrumbs__current" aria-current="page">${escapeHtml(item.label)}</span>`;
+          if (item.action === "home") return `${separator}<button type="button" data-breadcrumb-home>${escapeHtml(item.label)}</button>`;
+          return `${separator}<button type="button" data-breadcrumb="${escapeHtml(item.id)}" data-kind="${item.kind}">${escapeHtml(item.label)}</button>`;
+        }).join("")}</nav>`;
+      }
+
+      function renderInspector(entity, kind = kindForLevel(state.level)) {
+        state.selected = { id: entity.id, kind };
+        const value = score(entity);
+        const categories = project().categories.map(category => {
+          const categoryValue = scoreBlock(entity, category)?.score;
+          if (!Number.isFinite(categoryValue)) return "";
+          return `<tr><td><span class="metric-dot" style="--dot-color:${scoreColor(categoryValue)}"></span>${escapeHtml(label(category))}</td><td>${percent(categoryValue)}</td></tr>`;
+        }).join("");
+        const children = childContent(entity, kind);
+        elements.inspector.innerHTML = `<div class="inspector__head">
+          <div>${breadcrumbs(entity, kind)}<div class="inspector__kind">${escapeHtml(label(kind))}</div><h3>${escapeHtml(entity.id)}</h3></div>
+          <div class="inspector__score" style="--score-color:${scoreColor(value)}">${percent(value)}</div>
+        </div><div class="inspector__body">
+          <div class="inspector__summary"><table class="metric-table"><tbody>${categories}</tbody></table></div>
+          <div class="inspector__children">${children}</div>
+        </div>`;
+        elements.inspector.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest" });
+      }
+
+      function childContent(entity, kind) {
+        if (kind === "function") return functionContent(entity);
+        let children;
+        let title;
+        let childKind;
+        if (kind === "directory") {
+          const ids = new Set(entity.files || []);
+          children = project().files.filter(file => ids.has(file.id));
+          title = "Files in this directory";
+          childKind = "file";
+        } else {
+          const ids = new Set(entity.functions || []);
+          children = project().functions.filter(fn => ids.has(fn.id));
+          title = "Functions in this file";
+          childKind = "function";
+        }
+        children.sort((a, b) => (score(a) ?? 2) - (score(b) ?? 2));
+        if (!children.length) return `<p class="empty-filter">No ${childKind}s are available for this selection.</p>`;
+        return `<h4 class="children-title">${title}</h4><div class="child-list">${children.map(child => {
+          const displayName = childKind === "function" ? child.qualified_name || child.name : child.id;
+          const meta = childKind === "function" ? `Line ${child.line} · weight ${child.weight}` : `${child.functions?.length || 0} functions`;
+          return `<button class="child-button" data-child="${escapeHtml(child.id)}" data-kind="${childKind}">
+            <span><span class="child-name">${escapeHtml(displayName)}</span><span class="child-meta">${escapeHtml(meta)}</span></span>
+            <span class="child-score" style="color:${scoreText(score(child))}">${percent(score(child))}</span>
+          </button>`;
+        }).join("")}</div>`;
+      }
+
+      function functionContent(fn) {
+        return `${sourceContent(fn)}${criteriaContent(fn)}`;
+      }
+
+      function sourceContent(fn) {
+        if (typeof fn.source !== "string" || !fn.source.trim()) {
+          return `<p class="source-unavailable">Source code was not included in this score file's function metadata.</p>`;
+        }
+        const source = fn.source.endsWith("\n") ? fn.source.slice(0, -1) : fn.source;
+        const startLine = Number.isFinite(fn.line) ? fn.line : 1;
+        const lines = source.split("\n").map((line, index) => `<span class="source-line"><span class="source-line__number">${startLine + index}</span><span class="source-line__code">${escapeHtml(line) || " "}</span></span>`).join("");
+        const endLine = Number.isFinite(fn.end_line) ? fn.end_line : startLine + source.split("\n").length - 1;
+        return `<section class="source-view" aria-label="Function source">
+          <div class="source-view__head"><h4>Function source</h4><span>${escapeHtml(fn.file)} · lines ${startLine}–${endLine}</span></div>
+          <pre><code>${lines}</code></pre>
+        </section>`;
+      }
+
+      function criteriaContent(fn) {
+        const criteria = Object.entries(fn.criteria || {})
+          .filter(([, result]) => state.category === "overall" || result.category === state.category)
+          .sort(([, left], [, right]) => Number(left.passed) - Number(right.passed) || left.favorable_probability - right.favorable_probability);
+        if (!criteria.length) return `<p class="empty-filter">No criteria match the selected category.</p>`;
+        const toggleLabel = state.showCriterionPercentages ? "Hide percentages" : "Show percentages";
+        return `<div class="criteria-head"><h4 class="children-title">Criterion results</h4>
+          <button type="button" class="criteria-toggle" data-toggle-criterion-percentages aria-pressed="${state.showCriterionPercentages}">${toggleLabel}</button>
+        </div><div class="criterion-list">${criteria.map(([name, result]) => {
+          const status = result.passed ? "Passed" : "Failed";
+          const percentage = state.showCriterionPercentages ? ` · ${percent(result.favorable_probability)} favorable` : "";
+          return `<div class="criterion ${result.passed ? "criterion--passed" : "criterion--failed"}">
+            <div class="criterion__name">${escapeHtml(label(name))}</div>
+            <div class="criterion__status">${status}${percentage}</div>
+          </div>`;
+        }).join("")}</div>`;
+      }
+
+      function selectChild(id, kind) {
+        const entity = entityForKind(id, kind);
+        if (entity) renderInspector(entity, kind);
+      }
+
+      function clearSelection() {
+        state.selected = null;
+        elements.inspector.innerHTML = `<div class="inspector__empty">Select a map tile or hotspot to inspect it.</div>`;
+        document.querySelector(".overview-grid").scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+      }
+
+      elements["project-strip"].addEventListener("click", event => {
+        const card = event.target.closest("[data-project]");
+        if (!card) return;
+        state.project = Number(card.dataset.project);
+        state.selected = null;
+        state.query = "";
+        elements.search.value = "";
+        renderProjectStrip();
+        renderProject();
+        elements.inspector.innerHTML = `<div class="inspector__empty">Select a map tile or hotspot to inspect it.</div>`;
+      });
+      elements.category.addEventListener("change", event => { state.category = event.target.value; renderMap(); if (state.selected) refreshSelection(); });
+      elements["metric-mode"].addEventListener("click", event => {
+        const button = event.target.closest("button"); if (!button) return;
+        state.metric = button.dataset.value; setSegment(elements["metric-mode"], state.metric); renderMap(); if (state.selected) refreshSelection();
+      });
+      elements["level-mode"].addEventListener("click", event => {
+        const button = event.target.closest("button"); if (!button) return;
+        state.level = button.dataset.value; state.selected = null; setSegment(elements["level-mode"], state.level); renderMap();
+        elements.search.placeholder = `${label(kindForLevel(state.level))} name`;
+        elements.inspector.innerHTML = `<div class="inspector__empty">Select a map tile or hotspot to inspect it.</div>`;
+      });
+      elements.search.addEventListener("input", event => { state.query = event.target.value; renderMap(); });
+      [elements.heatmap, elements["rank-list"]].forEach(container => container.addEventListener("click", event => {
+        const target = event.target.closest("[data-entity]"); if (!target) return;
+        const entity = entityById(target.dataset.entity); if (entity) renderInspector(entity);
+      }));
+      elements.inspector.addEventListener("click", event => {
+        if (event.target.closest("[data-toggle-criterion-percentages]")) {
+          state.showCriterionPercentages = !state.showCriterionPercentages;
+          refreshSelection();
+          return;
+        }
+        if (event.target.closest("[data-breadcrumb-home]")) { clearSelection(); return; }
+        const breadcrumb = event.target.closest("[data-breadcrumb]");
+        if (breadcrumb) { selectChild(breadcrumb.dataset.breadcrumb, breadcrumb.dataset.kind); return; }
+        const target = event.target.closest("[data-child]"); if (target) selectChild(target.dataset.child, target.dataset.kind);
+      });
+      window.addEventListener("resize", () => window.requestAnimationFrame(renderMap));
+
+      function refreshSelection() {
+        if (!state.selected) return;
+        const entity = entityForKind(state.selected.id, state.selected.kind);
+        if (entity) renderInspector(entity, state.selected.kind);
+      }
+
+      renderProjectStrip();
+      renderProject();
+    })();
+  </script>
+</body>
+</html>

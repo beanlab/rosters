@@ -1,0 +1,874 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{REPORT_TITLE}}</title>
+  <style>
+    :root {
+      --ink: #172522;
+      --muted: #64736f;
+      --paper: #f2f7f5;
+      --panel: #ffffff;
+      --line: #ccd9d5;
+      --deep: #163f38;
+      --good: #25836f;
+      --middle: #d9aa43;
+      --bad: #c64f48;
+      --focus: #245fdb;
+      --shadow: 0 14px 40px rgba(28, 60, 52, 0.09);
+      font-family: Aptos, "Segoe UI", system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; }
+    button, input, select { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--focus) 65%, transparent);
+      outline-offset: 2px;
+    }
+
+    .masthead {
+      padding: clamp(2rem, 5vw, 4.5rem) clamp(1rem, 5vw, 5rem) 1.4rem;
+      background: var(--deep);
+      color: white;
+    }
+    .masthead__inner { max-width: 1500px; margin: 0 auto; }
+    .masthead h1 {
+      margin: 0;
+      max-width: 16ch;
+      font-size: clamp(2.3rem, 6vw, 5.7rem);
+      line-height: 0.94;
+      letter-spacing: -0.055em;
+      font-weight: 720;
+    }
+    .masthead p {
+      margin: 1.4rem 0 0;
+      max-width: 58ch;
+      color: #c9ddd7;
+      font-size: clamp(1rem, 1.5vw, 1.2rem);
+      line-height: 1.55;
+    }
+    .view-nav { display: flex; gap: .45rem; margin-top: 1.6rem; }
+    .view-nav button {
+      min-height: 42px;
+      padding: .55rem .85rem;
+      border: 1px solid #719088;
+      background: transparent;
+      color: #dceae6;
+      cursor: pointer;
+    }
+    .view-nav button[aria-pressed="true"] { border-color: white; background: white; color: var(--deep); }
+
+    .project-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1px;
+      max-width: 1500px;
+      margin: 2.5rem auto 0;
+      background: #54756d;
+      border: 1px solid #54756d;
+    }
+    .project-card {
+      min-height: 126px;
+      padding: 1rem 1.1rem;
+      border: 0;
+      background: #214d45;
+      color: white;
+      text-align: left;
+      cursor: pointer;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: .7rem;
+      align-items: end;
+    }
+    .project-card:hover { background: #285b52; }
+    .project-card[aria-selected="true"] {
+      background: white;
+      color: var(--ink);
+      box-shadow: inset 0 -5px var(--score-color);
+    }
+    .project-card__name {
+      align-self: start;
+      min-width: 0;
+      font-weight: 650;
+      overflow-wrap: anywhere;
+    }
+    .project-card__score {
+      font-size: clamp(2.3rem, 4vw, 3.7rem);
+      line-height: .8;
+      letter-spacing: -.055em;
+      font-variant-numeric: tabular-nums;
+    }
+    .project-card__meta { font-size: .8rem; opacity: .72; }
+
+    .app { max-width: 1500px; margin: 0 auto; padding: 2rem clamp(1rem, 4vw, 3.5rem) 4rem; }
+    .project-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .project-heading h2 {
+      margin: 0;
+      font-size: clamp(1.8rem, 4vw, 3.4rem);
+      letter-spacing: -.045em;
+      line-height: 1;
+    }
+    .project-heading__meta { margin-top: .55rem; color: var(--muted); }
+    .score-pair { display: flex; gap: 1.5rem; flex: 0 0 auto; }
+    .score-pair__item { text-align: right; }
+    .score-pair__value {
+      display: block;
+      font-size: 2rem;
+      line-height: 1;
+      letter-spacing: -.04em;
+      font-variant-numeric: tabular-nums;
+    }
+    .score-pair__label { color: var(--muted); font-size: .78rem; }
+
+    .controls {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: end;
+      gap: .7rem;
+      margin: 1.5rem 0;
+      padding: .75rem;
+      background: rgba(242, 247, 245, .94);
+      border: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 5px 18px rgba(31, 63, 55, .06);
+    }
+    .control { display: grid; gap: .25rem; }
+    .control label { color: var(--muted); font-size: .76rem; }
+    select, input[type="search"] {
+      min-height: 40px;
+      border: 1px solid #aebfba;
+      background: white;
+      color: var(--ink);
+      padding: .45rem .65rem;
+      border-radius: 3px;
+    }
+    input[type="search"] { width: min(260px, 70vw); }
+    .segmented { display: flex; border: 1px solid #aebfba; background: white; border-radius: 3px; }
+    .segmented button { min-height: 38px; border: 0; padding: .45rem .72rem; background: transparent; cursor: pointer; }
+    .segmented button[aria-pressed="true"] { background: var(--deep); color: white; }
+    .controls__spacer { flex: 1; }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(260px, .78fr);
+      gap: 1rem;
+      align-items: stretch;
+    }
+    .map-panel, .rank-panel, .inspector {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+    .panel-head { padding: 1rem 1.1rem .8rem; display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; }
+    .panel-head h3 { margin: 0; font-size: 1.05rem; }
+    .panel-head p { margin: 0; color: var(--muted); font-size: .82rem; }
+    .heatmap { position: relative; min-height: 520px; margin: 0 .8rem .8rem; background: #e4ece9; overflow: hidden; }
+    .tile {
+      position: absolute;
+      border: 2px solid white;
+      padding: .72rem;
+      background: var(--tile-color);
+      color: var(--tile-ink);
+      text-align: left;
+      cursor: pointer;
+      overflow: hidden;
+      transition: filter 120ms ease;
+    }
+    .tile:hover { filter: brightness(.94); z-index: 2; }
+    .tile__name { display: block; font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
+    .tile__score { display: block; margin-top: .3rem; font-size: clamp(1rem, 2vw, 1.7rem); line-height: 1; font-variant-numeric: tabular-nums; }
+    .tile__delta { display: block; margin-top: .25rem; font-size: .72rem; opacity: .8; }
+    .tile--tiny { padding: .28rem; }
+    .tile--tiny .tile__score, .tile--tiny .tile__delta { display: none; }
+    .tile--micro { padding: 0; }
+    .tile--micro > * { display: none; }
+
+    .legend { display: flex; align-items: center; gap: .55rem; color: var(--muted); font-size: .75rem; }
+    .legend__bar { width: 100px; height: 8px; background: linear-gradient(90deg, var(--bad), var(--middle), var(--good)); }
+
+    .rank-list { margin: 0; padding: 0 .75rem .75rem; list-style: none; max-height: 520px; overflow: auto; }
+    .rank-item button {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 2.2rem minmax(0, 1fr) auto;
+      gap: .55rem;
+      align-items: center;
+      padding: .72rem .35rem;
+      border: 0;
+      border-bottom: 1px solid #e3eae8;
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+    }
+    .rank-item button:hover { background: #f3f7f6; }
+    .rank-item__index { color: var(--muted); font-variant-numeric: tabular-nums; }
+    .rank-item__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rank-item__score { font-weight: 750; font-variant-numeric: tabular-nums; }
+
+    .inspector { margin-top: 1rem; min-height: 180px; }
+    .inspector__empty { padding: 3.5rem 1.5rem; text-align: center; color: var(--muted); }
+    .inspector__head { padding: 1.2rem 1.3rem; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 1fr auto; gap: 1rem; }
+    .breadcrumbs { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; margin-bottom: .65rem; color: var(--muted); font-size: .8rem; }
+    .breadcrumbs button { border: 0; padding: .15rem .1rem; background: transparent; color: var(--deep); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+    .breadcrumbs__separator { color: #91a09c; }
+    .breadcrumbs__current { color: var(--muted); overflow-wrap: anywhere; }
+    .inspector__kind { color: var(--muted); font-size: .78rem; }
+    .inspector__head h3 { margin: .2rem 0 0; font-size: clamp(1.2rem, 2.5vw, 1.8rem); overflow-wrap: anywhere; }
+    .inspector__score { font-size: 2.4rem; line-height: 1; font-weight: 700; color: var(--score-color); font-variant-numeric: tabular-nums; }
+    .inspector__body { display: grid; grid-template-columns: minmax(250px, .72fr) minmax(0, 1.5fr); }
+    .inspector__summary, .inspector__children { padding: 1.2rem 1.3rem; }
+    .inspector__summary { border-right: 1px solid var(--line); }
+    .metric-table { width: 100%; border-collapse: collapse; }
+    .metric-table td { padding: .5rem 0; border-bottom: 1px solid #e5ebe9; }
+    .metric-table td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+    .metric-dot { display: inline-block; width: 8px; height: 8px; margin-right: .45rem; border-radius: 50%; background: var(--dot-color); }
+    .children-title { margin: 0 0 .7rem; font-size: .9rem; }
+    .child-list { display: grid; gap: .45rem; }
+    .child-button {
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: .8rem;
+      padding: .72rem .8rem;
+      border: 1px solid #d7e1de;
+      background: #f9fbfa;
+      text-align: left;
+      cursor: pointer;
+    }
+    .child-button:hover { border-color: #8fa8a1; }
+    .child-name { overflow-wrap: anywhere; }
+    .child-meta { display: block; margin-top: .2rem; color: var(--muted); font-size: .76rem; }
+    .child-score { font-weight: 750; font-variant-numeric: tabular-nums; }
+    .source-view { margin-bottom: 1.1rem; border: 1px solid #29443e; background: #12231f; color: #e7f0ed; }
+    .source-view__head { display: flex; justify-content: space-between; gap: 1rem; padding: .65rem .8rem; border-bottom: 1px solid #36534c; color: #bed0ca; font-size: .78rem; }
+    .source-view__head h4 { margin: 0; color: white; font-size: .88rem; }
+    .source-view pre { margin: 0; padding: .65rem 0; overflow: auto; font: .84rem/1.62 "Cascadia Code", "SFMono-Regular", Consolas, monospace; tab-size: 4; }
+    .source-line { display: grid; grid-template-columns: 4.2rem minmax(max-content, 1fr); min-height: 1.62em; padding-right: 1rem; }
+    .source-line:hover { background: #1b312b; }
+    .source-line__number { padding-right: 1rem; color: #789089; text-align: right; user-select: none; border-right: 1px solid #29443e; }
+    .source-line__code { padding-left: 1rem; white-space: pre; }
+    .source-unavailable { margin: 0 0 1rem; padding: .85rem; border: 1px dashed #b8c8c3; color: var(--muted); }
+    .criterion-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .55rem; }
+    .criteria-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: 0 0 .65rem; }
+    .criteria-head .children-title { margin: 0; }
+    .criteria-toggle {
+      border: 1px solid #9db0aa;
+      border-radius: 999px;
+      padding: .35rem .65rem;
+      background: white;
+      color: var(--deep);
+      font: inherit;
+      font-size: .76rem;
+      font-weight: 650;
+      cursor: pointer;
+    }
+    .criteria-toggle[aria-pressed="true"] { border-color: var(--deep); background: var(--deep); color: white; }
+    .criterion {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .8rem;
+      border: 1px solid var(--criterion-color);
+      border-left-width: 5px;
+      padding: .7rem .8rem;
+    }
+    .criterion--passed {
+      --criterion-color: #25836f;
+      background: #edf7f4;
+    }
+    .criterion--failed {
+      --criterion-color: #c64f48;
+      background: #fff0ed;
+    }
+    .criterion__name { font-weight: 650; overflow-wrap: anywhere; }
+    .criterion__status { flex: 0 0 auto; color: var(--criterion-color); font-size: .78rem; font-weight: 750; }
+    .empty-filter { padding: 3rem 1rem; text-align: center; color: var(--muted); }
+    [hidden] { display: none !important; }
+    .history-heading { padding-bottom: 1.5rem; border-bottom: 1px solid var(--line); }
+    .history-heading h2 { margin: 0; font-size: clamp(1.8rem, 4vw, 3.4rem); letter-spacing: -.045em; line-height: 1; }
+    .history-heading p { max-width: 65ch; margin: .75rem 0 0; color: var(--muted); line-height: 1.55; }
+    .history-summary { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 1.25rem; }
+    .history-summary__item { min-width: 130px; }
+    .history-summary__value { display: block; font-size: 1.8rem; font-weight: 700; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+    .history-summary__label { color: var(--muted); font-size: .78rem; }
+    .history-panel { margin-top: 1.5rem; background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow); }
+    .history-legend { display: flex; gap: 1rem; color: var(--muted); font-size: .78rem; }
+    .history-legend span { display: inline-flex; align-items: center; gap: .4rem; }
+    .history-legend i { width: 18px; height: 3px; background: var(--legend-color); }
+    .history-chart-wrap { overflow-x: auto; padding: .5rem 1rem 1rem; }
+    .history-chart { display: block; min-width: 100%; height: 430px; }
+    .history-chart text { fill: var(--muted); font: 12px Aptos, "Segoe UI", system-ui, sans-serif; }
+    .history-chart .chart-grid { stroke: #dbe5e2; stroke-width: 1; }
+    .history-chart .chart-axis { stroke: #91a8a2; stroke-width: 1; }
+    .history-chart .chart-line { fill: none; stroke-width: 4; stroke-linejoin: round; stroke-linecap: round; }
+    .history-chart .chart-point { stroke: white; stroke-width: 3; cursor: pointer; }
+    .history-chart .chart-value { fill: var(--ink); font-weight: 700; text-anchor: middle; }
+    .history-table-wrap { overflow-x: auto; border-top: 1px solid var(--line); }
+    .history-table { width: 100%; border-collapse: collapse; }
+    .history-table th, .history-table td { padding: .75rem 1rem; border-bottom: 1px solid #e5ebe9; text-align: left; white-space: nowrap; }
+    .history-table th { color: var(--muted); font-size: .76rem; font-weight: 600; }
+    .history-table td:nth-child(n+2) { font-variant-numeric: tabular-nums; }
+    .history-table button { border: 0; padding: .25rem 0; background: transparent; color: var(--deep); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+    .footer { max-width: 1500px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 3.5rem) 2rem; color: var(--muted); font-size: .78rem; }
+
+    @media (max-width: 850px) {
+      .overview-grid, .inspector__body { grid-template-columns: 1fr; }
+      .inspector__summary { border-right: 0; border-bottom: 1px solid var(--line); }
+      .heatmap { min-height: 430px; }
+      .rank-list { max-height: 330px; }
+      .project-heading { align-items: flex-start; flex-direction: column; }
+      .score-pair__item { text-align: left; }
+    }
+    @media (max-width: 520px) {
+      .masthead { padding-top: 2rem; }
+      .project-strip { grid-template-columns: 1fr; }
+      .project-card { min-height: 92px; }
+      .controls { position: static; }
+      .controls__spacer { display: none; }
+      .heatmap { min-height: 380px; }
+      .history-chart { height: 360px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .tile { transition: none; } }
+  </style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead__inner">
+      <h1 id="report-title"></h1>
+      <p>Find the weak terrain first. Compare projects, scan directories and files, then open any hotspot to inspect functions and criteria.</p>
+      <nav class="view-nav" id="view-nav" aria-label="Report pages">
+        <button type="button" data-view="detail" aria-pressed="true">Snapshot detail</button>
+        <button type="button" data-view="history" aria-pressed="false">Score over time</button>
+      </nav>
+      <div class="project-strip" id="project-strip" role="tablist" aria-label="Projects"></div>
+    </div>
+  </header>
+
+  <main class="app">
+    <div id="detail-view">
+    <section class="project-heading" aria-labelledby="project-name">
+      <div>
+        <h2 id="project-name"></h2>
+        <div class="project-heading__meta" id="project-meta"></div>
+      </div>
+      <div class="score-pair" id="score-pair"></div>
+    </section>
+
+    <section class="controls" aria-label="Map controls">
+      <div class="control">
+        <label for="category">Score shown</label>
+        <select id="category"></select>
+      </div>
+      <div class="control">
+        <label>Aggregation</label>
+        <div class="segmented" id="metric-mode">
+          <button type="button" data-value="basic" aria-pressed="true">Basic</button>
+          <button type="button" data-value="weighted" aria-pressed="false">Weighted</button>
+        </div>
+      </div>
+      <div class="control">
+        <label>Map level</label>
+        <div class="segmented" id="level-mode">
+          <button type="button" data-value="files" aria-pressed="true">Files</button>
+          <button type="button" data-value="modules" aria-pressed="false">Directories</button>
+          <button type="button" data-value="functions" aria-pressed="false">Functions</button>
+        </div>
+      </div>
+      <div class="controls__spacer"></div>
+      <div class="control">
+        <label for="search">Filter map</label>
+        <input id="search" type="search" placeholder="File name">
+      </div>
+    </section>
+
+    <section class="overview-grid">
+      <div class="map-panel">
+        <div class="panel-head">
+          <div><h3>Quality map</h3><p id="map-summary"></p></div>
+          <div class="legend"><span>Needs work</span><span class="legend__bar"></span><span>Strong</span></div>
+        </div>
+        <div class="heatmap" id="heatmap"></div>
+      </div>
+      <aside class="rank-panel">
+        <div class="panel-head"><div><h3>Hotspots</h3><p>Lowest scores first</p></div></div>
+        <ol class="rank-list" id="rank-list"></ol>
+      </aside>
+    </section>
+
+    <section class="inspector" id="inspector" aria-live="polite">
+      <div class="inspector__empty">Select a map tile or hotspot to inspect it.</div>
+    </section>
+    </div>
+
+    <section id="history-view" aria-labelledby="history-title" hidden>
+      <header class="history-heading">
+        <h2 id="history-title">Overall score over time</h2>
+        <p>Track the repository across every requested snapshot. Points run from the oldest revision to the newest.</p>
+        <div class="history-summary" id="history-summary"></div>
+      </header>
+      <div class="history-panel">
+        <div class="panel-head">
+          <div><h3>Repository trend</h3><p id="history-range"></p></div>
+          <div class="history-legend" aria-label="Chart legend">
+            <span><i style="--legend-color:#176353"></i>Basic</span>
+            <span><i style="--legend-color:#245fdb"></i>Weighted</span>
+          </div>
+        </div>
+        <div class="history-chart-wrap">
+          <svg class="history-chart" id="history-chart" role="img" aria-labelledby="history-chart-title"></svg>
+        </div>
+        <div class="history-table-wrap">
+          <table class="history-table">
+            <thead><tr><th>Snapshot</th><th>Basic</th><th>Weighted</th><th>Change from previous</th></tr></thead>
+            <tbody id="history-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="footer" id="footer"></footer>
+
+  <script id="report-data" type="application/json">{{REPORT_DATA}}</script>
+  <script>
+    (() => {
+      "use strict";
+      const report = JSON.parse(document.getElementById("report-data").textContent);
+      const state = { view: "detail", project: 0, category: "overall", metric: "basic", level: "files", query: "", selected: null, showCriterionPercentages: false };
+      const elements = Object.fromEntries([
+        "project-strip", "project-name", "project-meta", "score-pair", "category", "metric-mode",
+        "level-mode", "search", "map-summary", "heatmap", "rank-list", "inspector", "footer",
+        "view-nav", "detail-view", "history-view", "history-summary", "history-range",
+        "history-chart", "history-table-body"
+      ].map(id => [id, document.getElementById(id)]));
+
+      document.getElementById("report-title").textContent = report.title;
+
+      const label = value => String(value).replaceAll("_", " ").replace(/\b\w/g, char => char.toUpperCase());
+      const percent = value => Number.isFinite(value) ? `${Math.round(value * 100)}%` : "—";
+      const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      })[char]);
+      const project = () => report.projects[state.project];
+
+      function scoreBlock(entity, category = state.category, metric = state.metric) {
+        const scores = entity?.scores || entity;
+        const container = category === "overall" ? scores : scores?.categories?.[category];
+        return container?.[metric] || container?.basic || null;
+      }
+      const score = entity => scoreBlock(entity)?.score;
+
+      function scoreColor(value) {
+        if (!Number.isFinite(value)) return "#9aa9a5";
+        const stops = value < .5
+          ? [[198,79,72], [217,170,67], value / .5]
+          : [[217,170,67], [37,131,111], (value - .5) / .5];
+        const mixed = stops[0].map((channel, index) => Math.round(channel + (stops[1][index] - channel) * stops[2]));
+        return `rgb(${mixed.join(",")})`;
+      }
+      const scoreInk = value => value > .42 && value < .79 ? "#172522" : "#ffffff";
+      const scoreText = value => value < .5 ? "#9d3732" : value < .78 ? "#75540b" : "#176353";
+
+      function datedProjects() {
+        return report.projects.map((item, index) => ({ item, index, time: Date.parse(item.capturedAt) }))
+          .sort((left, right) => Number.isFinite(left.time) && Number.isFinite(right.time) ? left.time - right.time : left.index - right.index);
+      }
+
+      function dateLabel(entry) {
+        if (!Number.isFinite(entry.time)) return entry.item.name;
+        return new Intl.DateTimeFormat(undefined, { year: "numeric", month: "short", day: "numeric" }).format(new Date(entry.time));
+      }
+
+      function setView(view) {
+        state.view = view;
+        elements["detail-view"].hidden = view !== "detail";
+        elements["history-view"].hidden = view !== "history";
+        elements["project-strip"].hidden = view !== "detail";
+        elements["view-nav"].querySelectorAll("button").forEach(button => {
+          button.setAttribute("aria-pressed", String(button.dataset.view === view));
+        });
+        elements.footer.textContent = view === "history"
+          ? `Generated from ${report.projects.length} score files`
+          : `Generated from ${project().sourceFile}`;
+        if (view === "history") renderHistory();
+      }
+
+      function renderHistory() {
+        const entries = datedProjects();
+        const basicValues = entries.map(entry => entry.item.overall.basic?.score);
+        const oldest = basicValues[0];
+        const newest = basicValues[basicValues.length - 1];
+        const change = Number.isFinite(oldest) && Number.isFinite(newest) ? newest - oldest : NaN;
+        const changeText = Number.isFinite(change) ? `${change >= 0 ? "+" : ""}${Math.round(change * 100)} pts` : "—";
+        elements["history-summary"].innerHTML = `
+          <div class="history-summary__item"><span class="history-summary__value">${entries.length}</span><span class="history-summary__label">Snapshots</span></div>
+          <div class="history-summary__item"><span class="history-summary__value">${percent(newest)}</span><span class="history-summary__label">Latest basic score</span></div>
+          <div class="history-summary__item"><span class="history-summary__value" style="color:${Number.isFinite(change) && change < 0 ? "var(--bad)" : "var(--good)"}">${changeText}</span><span class="history-summary__label">Oldest to latest</span></div>`;
+        elements["history-range"].textContent = entries.length
+          ? `${dateLabel(entries[0])} to ${dateLabel(entries[entries.length - 1])}`
+          : "No snapshots";
+
+        const width = Math.max(720, entries.length * 125);
+        const height = 400;
+        const left = 58;
+        const right = 35;
+        const top = 38;
+        const bottom = 72;
+        const plotWidth = width - left - right;
+        const plotHeight = height - top - bottom;
+        const x = index => entries.length === 1 ? left + plotWidth / 2 : left + (plotWidth * index / (entries.length - 1));
+        const y = value => top + ((1 - value) * plotHeight);
+        const grid = [0, .25, .5, .75, 1].map(value => `<g><line class="chart-grid" x1="${left}" y1="${y(value)}" x2="${width - right}" y2="${y(value)}"></line><text x="${left - 10}" y="${y(value) + 4}" text-anchor="end">${percent(value)}</text></g>`).join("");
+        const series = [
+          { key: "basic", color: "#176353" },
+          { key: "weighted", color: "#245fdb" }
+        ].map(({ key, color }) => {
+          const points = entries.map((entry, index) => ({ entry, index, value: entry.item.overall[key]?.score })).filter(point => Number.isFinite(point.value));
+          const line = points.map(point => `${x(point.index)},${y(point.value)}`).join(" ");
+          const labelOffset = key === "basic" ? -14 : 25;
+          const dots = points.map(point => `<g data-history-project="${point.entry.index}" tabindex="0" role="button" aria-label="View ${escapeHtml(dateLabel(point.entry))}, ${label(key)} score ${percent(point.value)}"><circle class="chart-point" cx="${x(point.index)}" cy="${y(point.value)}" r="7" fill="${color}"><title>${escapeHtml(dateLabel(point.entry))}: ${label(key)} ${percent(point.value)}</title></circle><text class="chart-value" x="${x(point.index)}" y="${y(point.value) + labelOffset}">${percent(point.value)}</text></g>`).join("");
+          return `<polyline class="chart-line" stroke="${color}" points="${line}"></polyline>${dots}`;
+        }).join("");
+        const labels = entries.map((entry, index) => `<text x="${x(index)}" y="${height - 30}" text-anchor="middle">${escapeHtml(dateLabel(entry))}</text>`).join("");
+        elements["history-chart"].setAttribute("viewBox", `0 0 ${width} ${height}`);
+        elements["history-chart"].style.width = `${width}px`;
+        elements["history-chart"].innerHTML = `<title id="history-chart-title">Overall basic and weighted scores over time</title>${grid}<line class="chart-axis" x1="${left}" y1="${top + plotHeight}" x2="${width - right}" y2="${top + plotHeight}"></line>${series}${labels}`;
+
+        elements["history-table-body"].innerHTML = entries.map((entry, index) => {
+          const basic = entry.item.overall.basic?.score;
+          const weighted = entry.item.overall.weighted?.score;
+          const previous = index ? entries[index - 1].item.overall.basic?.score : NaN;
+          const delta = Number.isFinite(basic) && Number.isFinite(previous) ? basic - previous : NaN;
+          const deltaText = Number.isFinite(delta) ? `${delta >= 0 ? "+" : ""}${Math.round(delta * 100)} pts` : "—";
+          return `<tr><td><button type="button" data-history-project="${entry.index}">${escapeHtml(dateLabel(entry))}</button></td><td>${percent(basic)}</td><td>${percent(weighted)}</td><td style="color:${Number.isFinite(delta) && delta < 0 ? "var(--bad)" : "var(--good)"}">${deltaText}</td></tr>`;
+        }).join("");
+      }
+
+      function setSegment(container, value) {
+        container.querySelectorAll("button").forEach(button => {
+          button.setAttribute("aria-pressed", String(button.dataset.value === value));
+        });
+      }
+
+      function renderProjectStrip() {
+        elements["project-strip"].innerHTML = report.projects.map((item, index) => {
+          const value = item.overall.basic.score;
+          return `<button class="project-card" role="tab" aria-selected="${index === state.project}"
+            data-project="${index}" style="--score-color:${scoreColor(value)}">
+            <span class="project-card__name">${escapeHtml(item.name)}</span>
+            <span class="project-card__score">${percent(value)}</span>
+            <span class="project-card__meta">${item.files.length} files · ${item.functions.length} functions</span>
+          </button>`;
+        }).join("");
+      }
+
+      function renderProject() {
+        const item = project();
+        elements["project-name"].textContent = item.name;
+        elements["project-meta"].textContent = `${item.files.length} files · ${item.functions.length} functions · schema ${item.schemaVersion}`;
+        elements["score-pair"].innerHTML = ["basic", "weighted"].map(metric => {
+          const value = item.overall[metric]?.score;
+          return `<div class="score-pair__item"><span class="score-pair__value">${percent(value)}</span><span class="score-pair__label">${label(metric)} score</span></div>`;
+        }).join("");
+        elements.category.innerHTML = `<option value="overall">Overall score</option>` + item.categories
+          .map(category => `<option value="${escapeHtml(category)}">${escapeHtml(label(category))}</option>`).join("");
+        if (!item.categories.includes(state.category)) state.category = "overall";
+        elements.category.value = state.category;
+        elements.footer.textContent = `Generated from ${item.sourceFile}`;
+        renderMap();
+      }
+
+      function visibleEntities() {
+        const items = project()[state.level] || [];
+        const query = state.query.trim().toLowerCase();
+        return items.filter(item => !query || item.id.toLowerCase().includes(query));
+      }
+
+      function partition(items, x, y, width, height, depth = 0) {
+        if (!items.length) return [];
+        if (items.length === 1) return [{ item: items[0], x, y, width, height }];
+        const weighted = items.map(item => ({ item, weight: Math.max(1, scoreBlock(item)?.total || item.functions?.length || item.files?.length || 1) }));
+        const total = weighted.reduce((sum, entry) => sum + entry.weight, 0);
+        let split = 1;
+        let firstWeight = weighted[0].weight;
+        let bestDifference = Math.abs(total - (firstWeight * 2));
+        for (let index = 1; index < weighted.length - 1; index += 1) {
+          firstWeight += weighted[index].weight;
+          const difference = Math.abs(total - (firstWeight * 2));
+          if (difference < bestDifference) {
+            bestDifference = difference;
+            split = index + 1;
+          }
+        }
+        const first = weighted.slice(0, split).map(entry => entry.item);
+        const second = weighted.slice(split).map(entry => entry.item);
+        firstWeight = weighted.slice(0, split).reduce((sum, entry) => sum + entry.weight, 0);
+        const ratio = firstWeight / total;
+        const vertical = width >= height;
+        if (vertical) {
+          const firstWidth = width * ratio;
+          return [...partition(first, x, y, firstWidth, height, depth + 1), ...partition(second, x + firstWidth, y, width - firstWidth, height, depth + 1)];
+        }
+        const firstHeight = height * ratio;
+        return [...partition(first, x, y, width, firstHeight, depth + 1), ...partition(second, x, y + firstHeight, width, height - firstHeight, depth + 1)];
+      }
+
+      function renderMap() {
+        const items = visibleEntities().filter(item => Number.isFinite(score(item))).sort((a, b) => score(a) - score(b));
+        const values = items.map(score).sort((a, b) => a - b);
+        const median = values.length ? values[Math.floor(values.length / 2)] : NaN;
+        const categoryText = state.category === "overall" ? "overall quality" : label(state.category);
+        elements["map-summary"].textContent = `${items.length} ${state.level} · ${categoryText} · median ${percent(median)}`;
+        if (!items.length) {
+          elements.heatmap.innerHTML = `<div class="empty-filter">No scored ${state.level} match this filter.</div>`;
+          elements["rank-list"].innerHTML = "";
+          return;
+        }
+        const width = elements.heatmap.clientWidth || 900;
+        const height = elements.heatmap.clientHeight || 520;
+        const rectangles = partition(items, 0, 0, width, height);
+        elements.heatmap.innerHTML = rectangles.map(({ item, x, y, width: tileWidth, height: tileHeight }) => {
+          const value = score(item);
+          const delta = value - median;
+          const sizeClass = tileWidth < 95 || tileHeight < 58 ? "tile--micro" : tileWidth < 160 || tileHeight < 90 ? "tile--tiny" : "";
+          const relative = Math.abs(delta) < .005 ? "at median" : `${Math.abs(Math.round(delta * 100))} pts ${delta > 0 ? "above" : "below"} median`;
+          return `<button class="tile ${sizeClass}" data-entity="${escapeHtml(item.id)}"
+            style="left:${x}px;top:${y}px;width:${tileWidth}px;height:${tileHeight}px;--tile-color:${scoreColor(value)};--tile-ink:${scoreInk(value)}"
+            title="${escapeHtml(item.id)}: ${percent(value)}, ${relative}">
+            <span class="tile__name">${escapeHtml(item.id)}</span><span class="tile__score">${percent(value)}</span><span class="tile__delta">${relative}</span>
+          </button>`;
+        }).join("");
+        elements["rank-list"].innerHTML = items.map((item, index) => `<li class="rank-item"><button data-entity="${escapeHtml(item.id)}">
+          <span class="rank-item__index">${String(index + 1).padStart(2, "0")}</span><span class="rank-item__name">${escapeHtml(item.id)}</span>
+          <span class="rank-item__score" style="color:${scoreText(score(item))}">${percent(score(item))}</span>
+        </button></li>`).join("");
+      }
+
+      function entityById(id) {
+        return project()[state.level].find(item => item.id === id);
+      }
+
+      function kindForLevel(level) {
+        return level === "functions" ? "function" : level === "files" ? "file" : "directory";
+      }
+
+      function collectionForKind(kind) {
+        return kind === "function" ? project().functions : kind === "file" ? project().files : project().modules;
+      }
+
+      function entityForKind(id, kind) {
+        return collectionForKind(kind).find(item => item.id === id);
+      }
+
+      function breadcrumbItems(entity, kind) {
+        const items = [{ label: project().name, action: "home" }];
+        if (kind === "directory") {
+          items.push({ label: entity.id, current: true });
+          return items;
+        }
+        const moduleId = entity.module;
+        const module = moduleId == null ? null : entityForKind(moduleId, "directory");
+        if (module) items.push({ label: module.id === "." ? "Repository root" : module.id, id: module.id, kind: "directory" });
+        if (kind === "function") {
+          const file = entityForKind(entity.file, "file");
+          if (file) items.push({ label: file.id, id: file.id, kind: "file" });
+        }
+        items.push({ label: kind === "function" ? entity.qualified_name || entity.name : entity.id, current: true });
+        return items;
+      }
+
+      function breadcrumbs(entity, kind) {
+        return `<nav class="breadcrumbs" aria-label="Selection path">${breadcrumbItems(entity, kind).map((item, index) => {
+          const separator = index ? `<span class="breadcrumbs__separator" aria-hidden="true">/</span>` : "";
+          if (item.current) return `${separator}<span class="breadcrumbs__current" aria-current="page">${escapeHtml(item.label)}</span>`;
+          if (item.action === "home") return `${separator}<button type="button" data-breadcrumb-home>${escapeHtml(item.label)}</button>`;
+          return `${separator}<button type="button" data-breadcrumb="${escapeHtml(item.id)}" data-kind="${item.kind}">${escapeHtml(item.label)}</button>`;
+        }).join("")}</nav>`;
+      }
+
+      function renderInspector(entity, kind = kindForLevel(state.level)) {
+        state.selected = { id: entity.id, kind };
+        const value = score(entity);
+        const categories = project().categories.map(category => {
+          const categoryValue = scoreBlock(entity, category)?.score;
+          if (!Number.isFinite(categoryValue)) return "";
+          return `<tr><td><span class="metric-dot" style="--dot-color:${scoreColor(categoryValue)}"></span>${escapeHtml(label(category))}</td><td>${percent(categoryValue)}</td></tr>`;
+        }).join("");
+        const children = childContent(entity, kind);
+        elements.inspector.innerHTML = `<div class="inspector__head">
+          <div>${breadcrumbs(entity, kind)}<div class="inspector__kind">${escapeHtml(label(kind))}</div><h3>${escapeHtml(entity.id)}</h3></div>
+          <div class="inspector__score" style="--score-color:${scoreColor(value)}">${percent(value)}</div>
+        </div><div class="inspector__body">
+          <div class="inspector__summary"><table class="metric-table"><tbody>${categories}</tbody></table></div>
+          <div class="inspector__children">${children}</div>
+        </div>`;
+        elements.inspector.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest" });
+      }
+
+      function childContent(entity, kind) {
+        if (kind === "function") return functionContent(entity);
+        let children;
+        let title;
+        let childKind;
+        if (kind === "directory") {
+          const ids = new Set(entity.files || []);
+          children = project().files.filter(file => ids.has(file.id));
+          title = "Files in this directory";
+          childKind = "file";
+        } else {
+          const ids = new Set(entity.functions || []);
+          children = project().functions.filter(fn => ids.has(fn.id));
+          title = "Functions in this file";
+          childKind = "function";
+        }
+        children.sort((a, b) => (score(a) ?? 2) - (score(b) ?? 2));
+        if (!children.length) return `<p class="empty-filter">No ${childKind}s are available for this selection.</p>`;
+        return `<h4 class="children-title">${title}</h4><div class="child-list">${children.map(child => {
+          const displayName = childKind === "function" ? child.qualified_name || child.name : child.id;
+          const meta = childKind === "function" ? `Line ${child.line} · weight ${child.weight}` : `${child.functions?.length || 0} functions`;
+          return `<button class="child-button" data-child="${escapeHtml(child.id)}" data-kind="${childKind}">
+            <span><span class="child-name">${escapeHtml(displayName)}</span><span class="child-meta">${escapeHtml(meta)}</span></span>
+            <span class="child-score" style="color:${scoreText(score(child))}">${percent(score(child))}</span>
+          </button>`;
+        }).join("")}</div>`;
+      }
+
+      function functionContent(fn) {
+        return `${sourceContent(fn)}${criteriaContent(fn)}`;
+      }
+
+      function sourceContent(fn) {
+        if (typeof fn.source !== "string" || !fn.source.trim()) {
+          return `<p class="source-unavailable">Source code was not included in this score file's function metadata.</p>`;
+        }
+        const source = fn.source.endsWith("\n") ? fn.source.slice(0, -1) : fn.source;
+        const startLine = Number.isFinite(fn.line) ? fn.line : 1;
+        const lines = source.split("\n").map((line, index) => `<span class="source-line"><span class="source-line__number">${startLine + index}</span><span class="source-line__code">${escapeHtml(line) || " "}</span></span>`).join("");
+        const endLine = Number.isFinite(fn.end_line) ? fn.end_line : startLine + source.split("\n").length - 1;
+        return `<section class="source-view" aria-label="Function source">
+          <div class="source-view__head"><h4>Function source</h4><span>${escapeHtml(fn.file)} · lines ${startLine}–${endLine}</span></div>
+          <pre><code>${lines}</code></pre>
+        </section>`;
+      }
+
+      function criteriaContent(fn) {
+        const criteria = Object.entries(fn.criteria || {})
+          .filter(([, result]) => state.category === "overall" || result.category === state.category)
+          .sort(([, left], [, right]) => Number(left.passed) - Number(right.passed) || left.favorable_probability - right.favorable_probability);
+        if (!criteria.length) return `<p class="empty-filter">No criteria match the selected category.</p>`;
+        const toggleLabel = state.showCriterionPercentages ? "Hide percentages" : "Show percentages";
+        return `<div class="criteria-head"><h4 class="children-title">Criterion results</h4>
+          <button type="button" class="criteria-toggle" data-toggle-criterion-percentages aria-pressed="${state.showCriterionPercentages}">${toggleLabel}</button>
+        </div><div class="criterion-list">${criteria.map(([name, result]) => {
+          const status = result.passed ? "Passed" : "Failed";
+          const percentage = state.showCriterionPercentages ? ` · ${percent(result.favorable_probability)} favorable` : "";
+          return `<div class="criterion ${result.passed ? "criterion--passed" : "criterion--failed"}">
+            <div class="criterion__name">${escapeHtml(label(name))}</div>
+            <div class="criterion__status">${status}${percentage}</div>
+          </div>`;
+        }).join("")}</div>`;
+      }
+
+      function selectChild(id, kind) {
+        const entity = entityForKind(id, kind);
+        if (entity) renderInspector(entity, kind);
+      }
+
+      function clearSelection() {
+        state.selected = null;
+        elements.inspector.innerHTML = `<div class="inspector__empty">Select a map tile or hotspot to inspect it.</div>`;
+        document.querySelector(".overview-grid").scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+      }
+
+      function openHistoryProject(target) {
+        const index = Number(target.dataset.historyProject);
+        if (!Number.isInteger(index) || !report.projects[index]) return;
+        state.project = index;
+        state.selected = null;
+        state.query = "";
+        elements.search.value = "";
+        renderProjectStrip();
+        renderProject();
+        setView("detail");
+      }
+
+      elements["view-nav"].addEventListener("click", event => {
+        const button = event.target.closest("[data-view]");
+        if (button) setView(button.dataset.view);
+      });
+      elements["project-strip"].addEventListener("click", event => {
+        const card = event.target.closest("[data-project]");
+        if (!card) return;
+        state.project = Number(card.dataset.project);
+        state.selected = null;
+        state.query = "";
+        elements.search.value = "";
+        renderProjectStrip();
+        renderProject();
+        elements.inspector.innerHTML = `<div class="inspector__empty">Select a map tile or hotspot to inspect it.</div>`;
+      });
+      elements.category.addEventListener("change", event => { state.category = event.target.value; renderMap(); if (state.selected) refreshSelection(); });
+      elements["metric-mode"].addEventListener("click", event => {
+        const button = event.target.closest("button"); if (!button) return;
+        state.metric = button.dataset.value; setSegment(elements["metric-mode"], state.metric); renderMap(); if (state.selected) refreshSelection();
+      });
+      elements["level-mode"].addEventListener("click", event => {
+        const button = event.target.closest("button"); if (!button) return;
+        state.level = button.dataset.value; state.selected = null; setSegment(elements["level-mode"], state.level); renderMap();
+        elements.search.placeholder = `${label(kindForLevel(state.level))} name`;
+        elements.inspector.innerHTML = `<div class="inspector__empty">Select a map tile or hotspot to inspect it.</div>`;
+      });
+      elements.search.addEventListener("input", event => { state.query = event.target.value; renderMap(); });
+      [elements.heatmap, elements["rank-list"]].forEach(container => container.addEventListener("click", event => {
+        const target = event.target.closest("[data-entity]"); if (!target) return;
+        const entity = entityById(target.dataset.entity); if (entity) renderInspector(entity);
+      }));
+      elements.inspector.addEventListener("click", event => {
+        if (event.target.closest("[data-toggle-criterion-percentages]")) {
+          state.showCriterionPercentages = !state.showCriterionPercentages;
+          refreshSelection();
+          return;
+        }
+        if (event.target.closest("[data-breadcrumb-home]")) { clearSelection(); return; }
+        const breadcrumb = event.target.closest("[data-breadcrumb]");
+        if (breadcrumb) { selectChild(breadcrumb.dataset.breadcrumb, breadcrumb.dataset.kind); return; }
+        const target = event.target.closest("[data-child]"); if (target) selectChild(target.dataset.child, target.dataset.kind);
+      });
+      elements["history-view"].addEventListener("click", event => {
+        const target = event.target.closest("[data-history-project]");
+        if (target) openHistoryProject(target);
+      });
+      elements["history-chart"].addEventListener("keydown", event => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        const target = event.target.closest("[data-history-project]");
+        if (target) { event.preventDefault(); openHistoryProject(target); }
+      });
+      window.addEventListener("resize", () => window.requestAnimationFrame(state.view === "history" ? renderHistory : renderMap));
+
+      function refreshSelection() {
+        if (!state.selected) return;
+        const entity = entityForKind(state.selected.id, state.selected.kind);
+        if (entity) renderInspector(entity, state.selected.kind);
+      }
+
+      renderProjectStrip();
+      renderProject();
+      setView("detail");
+    })();
+  </script>
+</body>
+</html>
