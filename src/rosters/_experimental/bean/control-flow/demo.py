@@ -2,7 +2,7 @@ from functools import wraps
 from typing import Concatenate, ParamSpec, TypeVar, Callable
 
 
-class GoBack(BaseException):
+class _GoBack(BaseException):
     def __init__(self, to_step):
         self.to_step = to_step
         super().__init__(to_step)
@@ -29,11 +29,11 @@ class ControlFlow(dict):
 
     def __call__(self, step_name: str) -> bool:
         return self.should_run(step_name)
-    
+
     def return_to(self, step_name: str):
         if step_name not in self._steps:
             raise ValueError(f'Unrecognized step: {step_name}')
-        raise GoBack(step_name)
+        raise _GoBack(step_name)
 
     def __bool__(self):
         return not self._steps or any(self._steps.values())
@@ -43,7 +43,7 @@ class ControlFlow(dict):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         should_run = False
-        if exc_type is GoBack:
+        if exc_type is _GoBack:
             self._first_pass = False
             for step in self._steps:
                 if step == exc_val.to_step:
@@ -73,27 +73,31 @@ def with_control(func: Callable[Concatenate[ControlFlow, P], R]):
     return new_func
 
 
-@with_control
-def main(control: ControlFlow):
-    if control.first_pass():
-        control['count'] = 0
-
-    if control('plan'):
-        control['count'] += 1
-        print('PLAN', control['count'])
-
-    if control('build'):
-        print('BUILD')
-
-    if control('review'):
-        decision = 'bad_idea' if control['count'] < 2 else 'great'
-        print('REVIEW', decision)
-        if decision == 'bad_idea':
-            control.return_to('plan')
-
-    if control('wrap-up'):
-        print('WRAP UP')
-
-
 if __name__ == '__main__':
+    # A demo of how to use ControlFlow
+    # State that must persist between passes should be stored in `control`
+    # and initialized under a `control.first_pass()` block
+    
+    @with_control
+    def main(control: ControlFlow):
+        if control.first_pass():
+            control['count'] = 0
+
+        if control('plan'):
+            control['count'] += 1
+            print('PLAN', control['count'])
+
+        if control('build'):
+            print('BUILD')
+
+        if control('review'):
+            decision = 'bad_idea' if control['count'] < 2 else 'great'
+            print('REVIEW', decision)
+            if decision == 'bad_idea':
+                control.return_to('plan')
+
+        if control('wrap-up'):
+            print('WRAP UP')
+
+
     main()
