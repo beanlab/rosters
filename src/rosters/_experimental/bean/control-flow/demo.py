@@ -21,12 +21,15 @@ class ControlFlow(dict):
 
     def first_pass(self) -> bool:
         return self._first_pass
-    
+
     def should_run(self, step_name: str) -> bool:
         should = self._steps.get(step_name, True)
         self._steps[step_name] = False
         return should
 
+    def __call__(self, step_name: str) -> bool:
+        return self.should_run(step_name)
+    
     def return_to(self, step_name: str):
         if step_name not in self._steps:
             raise ValueError(f'Unrecognized step: {step_name}')
@@ -74,19 +77,22 @@ def with_control(func: Callable[Concatenate[ControlFlow, P], R]):
 def main(control: ControlFlow):
     if control.first_pass():
         control['count'] = 0
-    
-    if control.should_run('plan'):
+
+    if control('plan'):
         control['count'] += 1
         print('PLAN', control['count'])
 
-    if control.should_run('build'):
+    if control('build'):
         print('BUILD')
 
-    if control.should_run('review'):
+    if control('review'):
         decision = 'bad_idea' if control['count'] < 2 else 'great'
         print('REVIEW', decision)
         if decision == 'bad_idea':
             control.return_to('plan')
+
+    if control('wrap-up'):
+        print('WRAP UP')
 
 
 if __name__ == '__main__':
