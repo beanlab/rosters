@@ -1,5 +1,3 @@
-import mdxcanvas
-
-
 def skilldir():
+    import mdxcanvas
     return str(mdxcanvas.skilldir)
